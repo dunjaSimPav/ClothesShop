@@ -1,0 +1,37 @@
+﻿@page "/admin/Articles/details/{id:long}"
+
+@using ClothesShop.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
+@using ClothesShop.Infrastructure 
+
+<h3 class="bg-info text-white text-center p-1">Details</h3>
+
+<table class="table table-sm table-bordered table-striped">
+    <tbody>
+        <tr><th>ID</th><td>@Article.ArticleId</td></tr>
+        <tr><th>Name</th><td>@Article.Name</td></tr>
+        <tr><th>Description</th><td>@Article.Description</td></tr>
+        <tr><th>ArticleType</th><td>@Article.ArticleType?.Name</td></tr>
+        <tr><th>Price</th><td>@Article.Price.ToString("c")</td></tr>
+    </tbody>
+</table>
+
+<NavLink class="btn btn-warning" href="@UrlTypeEnum.Edit.GetAdminUrl("Articles", Article.ArticleId)">Edit</NavLink>
+<NavLink class="btn btn-secondary" href="@UrlTypeEnum.List.GetAdminUrl("Articles")">Back</NavLink>
+
+@code {
+
+    [Inject]
+    public ClothesShop.Repository.IStoreRepository Repository { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+
+    public Article Article { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        Article = Repository.Articles.FirstOrDefault(x => x.ArticleId == Id);
+    }
+}

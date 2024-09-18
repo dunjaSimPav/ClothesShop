@@ -1,0 +1,83 @@
+﻿@page "/admin/Articles"
+@page "/admin"
+
+@using ClothesShop.Models
+@using Microsoft.EntityFrameworkCore
+@using ClothesShop.Infrastructure
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+
+@inherits OwningComponentBase<ClothesShop.Repository.IStoreRepository>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>ArticleType</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ArticleData?.Count() > 0)
+        {
+            @foreach (Article b in ArticleData)
+            {
+                <tr>
+                    <td>@b.ArticleId</td>
+                    <td>@b.Name</td>
+                    <td>@b.ArticleType?.Name</td>
+                    <td>@b.Price.ToString("c")</td>
+
+                    <td>
+                        <NavLink class="btn btn-info btn-sm"
+                                 href="@UrlTypeEnum.Details.GetAdminUrl("Articles", b.ArticleId)">
+                            Details
+                        </NavLink>
+                        <NavLink class="btn btn-warning btn-sm"
+                                 href="@UrlTypeEnum.Edit.GetAdminUrl("Articles", b.ArticleId)">
+                            Edit
+                        </NavLink>
+
+                        <button class="btn btn-danger btn-sm"
+                                @onclick="@(() => DeleteArticle(b))">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center">No Articles</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<NavLink class="btn btn-primary" href="@UrlTypeEnum.Create.GetAdminUrl("Articles")">Create</NavLink>
+
+
+@code {
+    public ClothesShop.Repository.IStoreRepository Repository => Service;
+
+    public IEnumerable<Article> ArticleData { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await UpdateData();
+    }
+
+    public async Task UpdateData()
+    {
+        ArticleData = await Repository.Articles.ToListAsync();
+    }
+
+    public async Task DeleteArticle(Article b)
+    {
+        Repository.DeleteArticle(b);
+
+        await UpdateData();
+    }
+}

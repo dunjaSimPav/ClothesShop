@@ -1,0 +1,12 @@
+﻿@model OrdersByUserViewModel
+
+@{
+    ViewData["Title"] = "OrdersByUser";
+}
+
+<h1>Not shipped orders</h1>
+
+<partial name="OrdersByUserTable" model="Model.Orders" />
+
+<h1>Shipped orders</h1>
+<partial name="OrdersByUserTable" model="Model.ShippedOrders" />

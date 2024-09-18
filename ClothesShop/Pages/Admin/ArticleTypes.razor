@@ -1,0 +1,80 @@
+﻿@page "/admin/ArticleTypes"
+
+@using ClothesShop.Models
+@using Microsoft.EntityFrameworkCore
+@using ClothesShop.Infrastructure
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+
+@inherits OwningComponentBase<ClothesShop.Repository.IStoreRepository>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ArticleTypeData?.Count() > 0)
+        {
+            @foreach (ArticleType b in ArticleTypeData)
+            {
+                <tr>
+                    <td>@b.ArticleTypeId</td>
+                    <td>@b.Name</td>
+                    <td>@b.Description</td>
+
+                    <td>
+                        <NavLink class="btn btn-info btn-sm"
+                                 href="@UrlTypeEnum.Details.GetAdminUrl("ArticleTypes", b.ArticleTypeId)">
+                            Details
+                        </NavLink>
+                        <NavLink class="btn btn-warning btn-sm"
+                                 href="@UrlTypeEnum.Edit.GetAdminUrl("ArticleTypes", b.ArticleTypeId)">
+                            Edit
+                        </NavLink>
+
+                        <button class="btn btn-danger btn-sm"
+                                @onclick="@(() => DeleteArticleType(b))">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center">No Article types</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<NavLink class="btn btn-primary" href="@UrlTypeEnum.Create.GetAdminUrl("Articles")">Create</NavLink>
+
+
+@code {
+    public ClothesShop.Repository.IStoreRepository Repository => Service;
+
+    public IEnumerable<ArticleType> ArticleTypeData { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await UpdateData();
+    }
+
+    public async Task UpdateData()
+    {
+        ArticleTypeData = await Repository.ArticleTypes.ToListAsync();
+    }
+
+    public async Task DeleteArticleType(ArticleType b)
+    {
+        Repository.DeleteArticleType(b);
+
+        await UpdateData();
+    }
+}

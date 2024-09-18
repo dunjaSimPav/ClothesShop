@@ -1,0 +1,49 @@
+﻿@model Cart
+
+<section id="portfolio" class="portfolio cart-section">
+    <div class="container aos-init aos-animate">
+        <h2>Your cart</h2>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Quantity</th>
+                    <th>Item</th>
+                    <th class="text-right">Price</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Lines)
+                {
+                    <tr>
+                        <td class="text-center">@item.Quantity</td>
+                        <td class="text-left">@item.Article.Name</td>
+                        <td class="text-right">@item.Article.Price.ToString("c")</td>
+                        <td class="text-right">@((item.Quantity * item.Article.Price).ToString("c"))</td>
+                        <td class="text-center">
+                            <form asp-controller="Cart" asp-action="Delete" method="post">
+                                <input type="hidden" name="ArticleId"
+                                       value="@item.Article.ArticleId" />
+                                <button type="submit" class="danger-btn">
+                                    Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-right">Total:</td>
+                    <td class="text-right">@Model.ComputeTotalValue().ToString("c")</td>
+                </tr>
+            </tfoot>
+        </table>
+        <div class="text-center">
+            <a class="confirm-btn" asp-controller="Home" asp-action="Index" asp-fragment="portfolio">Continue shopping</a>
+            <a class="confirm-btn" asp-action="Checkout" asp-controller="Order">
+                Checkout
+            </a>
+        </div>
+    </div>
+</section>

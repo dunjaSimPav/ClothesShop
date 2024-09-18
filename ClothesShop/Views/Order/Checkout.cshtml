@@ -1,0 +1,52 @@
+﻿@model Order
+
+@{
+    var userProfile = Model?.UserProfile ?? new UserProfile();
+}
+
+<section class="contact">
+    <div class="container aos-init aos-animate col-md-6">
+
+        <h2>Check out now</h2>
+        <p>Please enter your details, and we'll ship your goods right away!</p>
+
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <form asp-action="Checkout" method="post" class="php-email-form">
+            <h3>Ship to</h3>
+            <div class="form-group mb-3">
+                <label asp-for="Name">Name:</label>
+                <div asp-validation-for="Name" class="text-danger"></div>
+                <input asp-for="Name" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>Email:</label><input asp-for="Email" class="form-control" value="@userProfile.Email" />
+            </div>
+            <h3>Address</h3>
+            <div class="form-group">
+                <label>Address:</label><input asp-for="Line1" class="form-control" value="@userProfile.Address" />
+            </div>
+            <div class="form-group">
+                <label>City:</label><input asp-for="City" class="form-control" value="@userProfile.City" />
+            </div>
+            <div class="form-group">
+                <label>State:</label><input asp-for="State" class="form-control" value="@userProfile.State" />
+            </div>
+            <div class="form-group">
+                <label>Zip:</label><input asp-for="Zip" class="form-control" value="@userProfile.Zip" />
+            </div>
+            <div class="form-group">
+                <label>Country:</label><input asp-for="Country" class="form-control" value="@userProfile.Country" />
+            </div>
+            <h3>Options</h3>
+            <div class="checkbox">
+                <label>
+                    <input asp-for="GiftWrap" /> Gift wrap these items
+                </label>
+            </div>
+            <div class="text-center">
+                <input class="btn btn-primary" type="submit" value="Complete Order" />
+            </div>
+        </form>
+    </div>
+</section>

@@ -1,0 +1,32 @@
+﻿@{
+    Layout = "/Views/Shared/_LoginRegisterLayout.cshtml";
+}
+
+@model RegisterViewModel
+
+<section class="contact">
+    <div class="container aos-init aos-animate col-md-6">
+        <form asp-action="Register" asp-controller="Account" method="post" class="php-email-form">
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Name">Username</label>
+                <div asp-validation-for="Name" class="text-danger"></div>
+                <input asp-for="Name" class="form-control" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Password"></label>
+                <div asp-validation-for="Password" class="text-danger"></div>
+                <input asp-for="Password" class="form-control" type="password" />
+            </div>
+
+            <div class="form-group">
+                <div class="text-danger" asp-validation-summary="All"></div>
+                <button class="confirm-btn no-left-margin" type="submit">Register</button>
+                <a href="/Account/Login" class="confirm-btn no-left-margin" type="submit">Log In</a>
+            </div>
+
+        </form>
+    </div>
+</section>

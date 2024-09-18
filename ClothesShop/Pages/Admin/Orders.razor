@@ -1,0 +1,69 @@
+﻿@using ClothesShop.Repository
+@using ClothesShop.Models
+@using ClothesShop.Pages.Admin
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.EntityFrameworkCore
+@using ClothesShop.Services
+@using ClothesShop.Infrastructure;
+
+@page "/admin/orders"
+
+@inherits OwningComponentBase<IOrderRepository>
+
+@inject IEmailService emailService
+
+<OrderTable TableTitle="Unshipped Orders"
+            Orders="UnshippedOrders" ButtonLabel="Ship"
+            OrderSelected="ShipOrder" OrderCanceled="CancelOrder" />
+
+<OrderTable TableTitle="Shipped Orders"
+            Orders="ShippedOrders" ButtonLabel="Reset"
+            OrderSelected="ResetOrder" />
+
+<button class="btn btn-info" @onclick="@(() => UpdateData())">Refresh Data</button>
+
+
+@code {
+    public IOrderRepository Repository => Service;
+
+    public IEnumerable<Order> AllOrders { get; set; }
+    public IEnumerable<Order> UnshippedOrders { get; set; }
+    public IEnumerable<Order> ShippedOrders { get; set; }
+
+    protected async override Task OnInitializedAsync()
+    {
+        await UpdateData();
+    }
+
+    public async Task UpdateData()
+    {
+        AllOrders = await Repository.Orders.ToListAsync();
+
+        UnshippedOrders = AllOrders.Where(x => !x.Shipped);
+        ShippedOrders = AllOrders.Where(x => x.Shipped);
+    }
+
+    public void ShipOrder(int id) => UpdateOrder(id, true);
+    public void ResetOrder(int id) => UpdateOrder(id, false);
+    private void UpdateOrder(int id, bool shipValue)
+    {
+        Order o = Repository.Orders.FirstOrDefault(x => x.OrderId == id);
+        o.Shipped = shipValue;
+        Repository.SaveOrder(o);
+
+        var content = EmailHelper.PrepareOrderEmail(o, true, shipValue);
+
+        emailService.SendEmail(o.Email, "Your order was " + (shipValue == true ? "shipped" : "updated") + "!", content);
+    }
+    public void CancelOrder(int id)
+    {
+        Order o = Repository.Orders.FirstOrDefault(x => x.OrderId == id);
+        o.Canceled = true;
+        o.Note = "Order was cancelled by an administrator";
+        Repository.SaveOrder(o);
+
+        var content = EmailHelper.PrepareOrderEmail(o, true, wasCancelled: true);
+
+        emailService.SendEmail(o.Email, "Your order was cancelled!", content);
+    }
+}

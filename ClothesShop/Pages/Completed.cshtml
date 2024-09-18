@@ -1,0 +1,20 @@
+﻿@page
+
+<section class="hero">
+    <div class="container aos-init aos-animate d-flex h-100 justify-content-center align-self-center w-50">
+        <div class="col-md-12 justify-content-center align-self-center text-center">
+            <h2>Thanks!</h2>
+
+            <p>Thanks for placing order #@OrderId</p>
+
+            <p>We'll ship your goods as soon as possible.</p>
+
+            <a class="btn btn-primary" asp-controller="Home">Return to Store</a>
+        </div>
+    </div>
+</section>
+
+@functions {
+    [BindProperty(SupportsGet = true)]
+    public string OrderId { get; set; }
+}

@@ -1,0 +1,10 @@
+﻿@model Cart
+
+@if (Model.Lines.Count() > 0) 
+{
+    <li class="nav-item">
+        <a class="nav-link" href="/Cart">
+            <i class="fa fa-shopping-cart"></i> @Model.Lines.Sum(x => x.Quantity) item(s) (@Model.ComputeTotalValue().ToString("c"))
+        </a>
+    </li>
+}

@@ -1,0 +1,90 @@
+﻿@page "/admin/ArticleTypes/edit/{id:long}"
+
+@page "/admin/ArticleTypes/create"
+
+@using ClothesShop.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
+@using ClothesShop.Infrastructure
+@using ClothesShop.Repository
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Collections.Generic
+@using ClothesShop.Components
+
+@inherits OwningComponentBase<IStoreRepository>
+
+<style>
+    div.validation-message {
+        color: rgb(220, 53, 69);
+        font-weight: 500;
+    }
+</style>
+
+<h3 class="bg-@ThemeColor text-white text-center p-1">@TitleText an Article Type</h3>
+
+<EditForm Model="ArticleType" OnValidSubmit="SaveArticleType">
+    <DataAnnotationsValidator />
+
+    @if (ArticleType.ArticleTypeId > 0)
+    {
+        <div class="form-group">
+            <label>ID</label>
+            <input class="form-control" disabled value="@ArticleType.ArticleTypeId" />
+        </div>
+    }
+
+    <div class="form-group">
+        <label>Name</label>
+        <ValidationMessage For="@(() => ArticleType.Name)" />
+        <InputText class="form-control" @bind-Value="ArticleType.Name" />
+    </div>
+
+    <div class="form-group">
+        <label>Description</label>
+        <ValidationMessage For="@(() => ArticleType.Description)" />
+        <InputTextArea class="form-control" @bind-Value="ArticleType.Description" />
+    </div>
+
+    <button type="submit" class="btn btn-@ThemeColor">Save</button>
+
+    <NavLink class="btn btn-secondary" href="/admin/ArticleTypes">Cancel</NavLink>
+</EditForm>
+
+@code {
+
+    [Inject]
+    public ClothesShop.Repository.IStoreRepository Repository { get; set; }
+
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+
+    public ArticleType ArticleType { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Id > 0)
+            ArticleType = Repository.ArticleTypes.FirstOrDefault(x => x.ArticleTypeId == Id);
+        else
+            ArticleType = new ArticleType();
+    }
+
+    public void SaveArticleType()
+    {
+        if (Id > 0)
+        {
+            Repository.SaveArticleType(ArticleType);
+        }
+        else
+        {
+            Repository.CreateArticleType(ArticleType);
+        }
+
+        NavManager.NavigateTo("/admin/ArticleTypes");
+    }
+
+    public string ThemeColor => Id > 0 ? "warning" : "primary";
+    public string TitleText => Id > 0 ? "Edit" : "Create";
+}

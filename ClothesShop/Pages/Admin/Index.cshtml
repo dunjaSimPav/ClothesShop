@@ -1,0 +1,20 @@
+﻿@page "/admin" 
+
+@{ Layout = null; }
+
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize("RequireAdministratorRole")] 
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>ClothesShop Admin</title>
+        <link href="/lib/twitter-bootstrap/css/bootstrap.css" rel="stylesheet" />
+        
+        <base href="/" />
+    </head>
+    <body>
+        <component type="typeof(Routed)" render-mode="Server" />
+        <script src="/_framework/blazor.server.js"></script>
+    </body>
+</html>

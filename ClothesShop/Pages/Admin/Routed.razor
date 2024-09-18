@@ -1,0 +1,13 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
+
+<Router AppAssembly="typeof(Startup).Assembly">
+    <Found>
+        <AuthorizeRouteView RouteData="@context" DefaultLayout="typeof(AdminLayout)" />
+    </Found>
+    <NotFound>
+        <h4 class="bg-danger text-white text-center p-2">
+            No matching route found!
+        </h4>
+    </NotFound>
+</Router>

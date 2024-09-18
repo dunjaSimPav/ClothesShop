@@ -1,0 +1,49 @@
+﻿@using Microsoft.AspNetCore.Components.Routing
+
+@inherits LayoutComponentBase
+
+<div class="bg-info text-white p-2">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col">
+                <span class="navbar-brand ml-2"><NavLink class="nav-link text-white" href="/">Clothes Shop - ADMIN</NavLink></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container-fluid">
+    <div class="row p-2">
+        <div class="col-3">
+            <NavLink class="btn btn-outline-primary btn-block"
+                     href="/admin/Articles"
+                     ActiveClass="btn-primary text-white"
+                     Match="NavLinkMatch.Prefix">
+                Articles
+            </NavLink>
+            <NavLink class="btn btn-outline-primary btn-block"
+                     href="/admin/ArticleTypes"
+                     ActiveClass="btn-primary text-white"
+                     Match="NavLinkMatch.Prefix">
+                Article types
+            </NavLink>
+            <NavLink class="btn btn-outline-primary btn-block"
+                     href="/admin/orders"
+                     ActiveClass="btn-primary text-white"
+                     Match="NavLinkMatch.Prefix">
+                Orders
+            </NavLink>
+
+            <NavLink class="btn btn-outline-primary btn-block"
+                     href="/account/logout"
+                     ActiveClass="btn-primary text-white"
+                     Match="NavLinkMatch.Prefix">
+                Log Out
+            </NavLink>
+        </div>
+        <div class="col">
+            @Body
+        </div>
+    </div>
+</div>

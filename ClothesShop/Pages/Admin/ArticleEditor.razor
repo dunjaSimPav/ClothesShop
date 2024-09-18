@@ -1,0 +1,155 @@
+﻿@page "/admin/Articles/edit/{id:long}"
+
+@page "/admin/Articles/create"
+ 
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Http
+@using ClothesShop.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
+@using ClothesShop.Infrastructure
+@using ClothesShop.Repository 
+@using Microsoft.AspNetCore.Components.Forms 
+@using System.Collections.Generic
+@using ClothesShop.Components 
+@using System.ComponentModel.DataAnnotations
+@using System.IO
+@using System.Diagnostics
+
+@inherits OwningComponentBase<IStoreRepository>
+
+<style>
+    div.validation-message { color: rgb(220, 53, 69); font-weight: 500; }
+</style>
+
+<h3 class="bg-@ThemeColor text-white text-center p-1">@TitleText an Article</h3>
+
+<EditForm Model=@Article OnValidSubmit="SaveArticle" OnInvalidSubmit="OnValidationFail">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (Article.ArticleId > 0)
+    {
+        <div class="form-group">
+            <label>ID</label>
+            <input class="form-control" disabled value="@Article.ArticleId" />
+        </div>
+    }
+
+    <div class="form-group">
+        <label>Name</label>
+        <ValidationMessage For="@(() => Article.Name)" />
+        <InputText class="form-control" @bind-Value="Article.Name" />
+    </div>
+
+    <div class="form-group">
+        <label>Description</label>
+        <ValidationMessage For="@(() => Article.Description)" />
+        <InputTextArea class="form-control" @bind-Value="Article.Description" />
+    </div>
+
+    <div class="form-group">
+        <label>ArticleType</label>
+        <ValidationMessage For="@(() => Article.ArticleTypeId)" />
+        <ExtendedInputSelect class="form-control selectpicker" @bind-Value="Article.ArticleTypeId">
+            <option value="0">Select a ArticleType</option>
+            @if (ArticleTypes != null)
+            {
+                @foreach (var ArticleType in ArticleTypes)
+                {
+                    <option value="@ArticleType.ArticleTypeId">@ArticleType.Name</option>
+                }
+            }
+        </ExtendedInputSelect>
+    </div>
+
+    <div class="form-group">
+        <label>Price</label>
+        <ValidationMessage For="@(() => Article.Price)" />
+        <InputNumber class="form-control" @bind-Value="Article.Price" />
+    </div>
+
+    <div class="form-group">
+        <label>Picture</label>
+        <ValidationMessage For="@(() => Article.Image)" />
+        <img style="max-height: 256px" src="@Article.Image" />
+        <InputFile id="imgSelector" class="form-control" OnChange="UploadImage" multiple="false" />
+    </div>
+
+    <button type="submit" class="btn btn-@ThemeColor" disabled="@(!CanSave)">Save</button>
+
+    <NavLink class="btn btn-secondary" href="/admin/Articles">Cancel</NavLink>
+</EditForm>
+
+@code {
+
+    [Inject]
+    public ClothesShop.Repository.IStoreRepository Repository { get; set; }
+
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+
+    [Inject]
+    public IWebHostEnvironment WebHostEnvironment { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+
+    public Article Article { get; set; }
+
+    public List<ArticleType> ArticleTypes { get; set; }
+
+    public bool CanSave { get; set; } = true;
+
+    protected override void OnParametersSet()
+    {
+        if (Id > 0)
+            Article = Repository.Articles.FirstOrDefault(x => x.ArticleId == Id);
+        else
+            Article = new Article();
+
+        ArticleTypes = Repository.ArticleTypes.ToList();
+    }
+
+    public async Task OnValidationFail(EditContext editContext)
+    {
+        await Task.Delay(10);
+    }
+
+    public async Task SaveArticle(EditContext editContext)
+    {
+        if (!CanSave) return;
+
+        if(Id > 0)
+        {
+            Repository.SaveArticle(Article);
+        } else
+        {
+            Repository.CreateArticle(Article);
+        }
+
+        await Task.Delay(300);
+        NavManager.NavigateTo("/admin/Articles", forceLoad: true);
+    }
+
+    public async Task UploadImage(InputFileChangeEventArgs args)
+    {
+        if (args.File == null || !CanSave) return;
+
+        CanSave = false;
+        string uniqueFileName = Guid.NewGuid().ToString() + "_" + args.File.Name;
+        string uniquePath = System.IO.Path.Combine("assets", "products", uniqueFileName);
+        var filePath = System.IO.Path.Combine(this.WebHostEnvironment.WebRootPath, uniquePath);
+
+        using var fs = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write);
+        await args.File.OpenReadStream().CopyToAsync(fs);
+        await fs.FlushAsync();
+        fs.Close();
+
+        Article.Image = filePath.Replace(this.WebHostEnvironment.WebRootPath, "").Replace("\\", "/");
+        CanSave = true;
+    }
+
+    public string ThemeColor => Id > 0 ? "warning" : "primary";
+    public string TitleText => Id > 0 ? "Edit" : "Create";
+}

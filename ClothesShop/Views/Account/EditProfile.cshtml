@@ -1,0 +1,62 @@
+﻿@model ClothesShop.Models.UserProfile
+
+@{
+    ViewData["Title"] = "Edit Profile";
+}
+
+<main id="main">
+    <section id="contact" class="contact">
+
+      <div class="container" data-aos="fade-up">
+
+        <header class="section-header">
+          <h2>User Profile</h2>
+          <p>Edit</p>
+        </header>
+
+        <div class="row gy-4 justify-content-md-center">
+          <div class="col-lg-6">
+              <form asp-action="EditProfile" asp-controller="Account" method="post" class="php-email-form">
+                <input type="hidden" asp-for="Id" />
+                
+                <div class="row gy-4">
+                    <div class="col-md-6">
+                      <input asp-for="Name" type="text" name="name" class="form-control" placeholder="Your Name" required readonly>
+                    </div>
+                    <div class="col-md-6">
+                      <input asp-for="Email" type="text" name="email" class="form-control" placeholder="Your Email" required readonly>
+                    </div>
+                    <div class="col-md-6">
+                      <input asp-for="Zip" type="text" name="zip" class="form-control" placeholder="Zip Code" required>
+                    </div>
+                    <div class="col-md-6">
+                      <input asp-for="State" type="text" name="state" class="form-control" placeholder="State" required>
+                    </div>
+                    <div class="col-md-12">
+                      <input asp-for="Address" type="text" name="address" class="form-control" placeholder="Address" required>
+                    </div>
+                    <div class="col-md-6">
+                      <input asp-for="City" type="text" name="city" class="form-control" placeholder="City" required>
+                    </div>
+                    <div class="col-md-6">
+                      <input asp-for="Country" type="text" name="country" class="form-control" placeholder="Country" required>
+                    </div>
+
+                    <div class="col-md-12 text-center">
+                      <div class="error-message">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                      </div>
+
+                      <button type="submit" class="getstarted">Update Profile</button>
+                    </div>
+                </div>
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+</main>
+

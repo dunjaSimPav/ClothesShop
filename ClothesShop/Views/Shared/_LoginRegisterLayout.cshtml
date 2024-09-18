@@ -1,0 +1,123 @@
+﻿@inject ISessionManager _sessionManager
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <title>@ViewBag.Title</title>
+    <meta content="" name="description">
+    <meta content="" name="keywords">
+
+    <!-- Favicons -->
+    <link href="/assets/img/favicon.png" rel="icon">
+    <link href="/assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+    <!-- Vendor CSS Files -->
+    <link href="/assets/vendor/aos/aos.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="/assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet">
+    <link href="/assets/vendor/remixicon/remixicon.css" rel="stylesheet">
+    <link href="/assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet">
+
+    <!-- Template Main CSS File -->
+    <link href="/assets/css/style.css" rel="stylesheet">
+
+    @*    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+        integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    *@
+
+    <link rel="stylesheet" href="/lib/font-awesome/css/all.css" />
+</head>
+<body>
+    @{
+        var mustBeLoggedIn = _sessionManager.GetByKey("MustBeLoggedIn");
+        var invalidOrderSubmittedForEditing = _sessionManager.GetByKey("ValidOrderDoesNotExist");
+        bool hasSomeErrorMessage = false;
+        string errorMessage = string.Empty;
+        if (!string.IsNullOrEmpty(mustBeLoggedIn))
+        {
+            _sessionManager.DeleteByKey("MustBeLoggedIn");
+            hasSomeErrorMessage = true;
+            errorMessage = mustBeLoggedIn;
+        }
+        else if (!string.IsNullOrEmpty(invalidOrderSubmittedForEditing))
+        {
+            _sessionManager.DeleteByKey("ValidOrderDoesNotExist");
+            hasSomeErrorMessage = true;
+            errorMessage = invalidOrderSubmittedForEditing;
+        }
+        if (hasSomeErrorMessage)
+        {
+            <!-- Flexbox container for aligning the toasts -->
+            <div class="toast" style="position: absolute; top: 10px; right: 10px;" data-delay="5000">
+                <div class="toast-header">
+                    <i class="fa fa-exclamation-triangle rounded mr-2"></i>
+                    <strong class="mr-auto">Bootstrap</strong>
+                    <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body">
+                    @errorMessage
+                </div>
+            </div>
+        }
+    }
+    <!-- ======= Header ======= -->
+    <header id="header" class="header fixed-top">
+        <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
+
+            <a asp-controller="Home" asp-action="Index" class="logo d-flex align-items-center">
+                <img src="/assets/img/logo.png" alt="">
+                <span>FlexStart</span>
+            </a>
+            <vc:navigation-menu />
+        </div>
+    </header><!-- End Header -->
+        
+    <!-- ======= Content ======= -->
+    @RenderBody() <!-- End Content -->
+
+    <!-- ======= Footer ======= -->
+    <footer id="footer" class="footer" style="position: fixed; bottom: 0px; left: 0px; right: 0px;">
+
+        <div class="container">
+            <div class="copyright">
+                &copy; Copyright <strong><span>FlexStart</span></strong>. All Rights Reserved
+            </div>
+            <div class="credits">
+                <!-- All the links in the footer should remain intact. -->
+                <!-- You can delete the links only if you purchased the pro version. -->
+                <!-- Licensing information: https://bootstrapmade.com/license/ -->
+                <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/flexstart-bootstrap-startup-template/ -->
+                Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+            </div>
+        </div>
+    </footer><!-- End Footer -->
+
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+    <!-- Vendor JS Files -->
+    <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
+    <script src="/assets/vendor/aos/aos.js"></script>
+    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
+    <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+    <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
+
+    <!-- Template Main JS File -->
+    <script src="/assets/js/main.js"></script>
+    <script src="/lib/jquery/js/jquery.min.js"></script>
+    <script src="/lib/popper/js/popper.js"></script>
+    <script>
+        $(document).ready(function(){
+          $('.toast').toast('show');
+        });
+    </script>
+</body>
+</html>
