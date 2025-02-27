@@ -9,28 +9,56 @@ using ClothesShop.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using ClothesShop.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using System.IO;
+using Stripe;
+using Microsoft.Extensions.Configuration;
+using Stripe.Checkout;
 
 namespace ClothesShop.Controllers
 {
     public class OrderController : Controller
     {
-        private IOrderRepository repository;
-        private readonly IUserProfileRepository userProfileRepository;
-        private Cart cart;
+        private IOrderRepository _repository;
+        private readonly IUserProfileRepository _userProfileRepository;
+        private Cart _cart;
 
-        private UserManager<IdentityUser> userManager;
-        private readonly ISessionManager sessionManager;
-        private readonly IEmailService emailService;
+        private UserManager<IdentityUser> _userManager;
+        private readonly IPaymentService _paymentService;
+        private readonly ISessionManager _sessionManager;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
         public OrderController(UserManager<IdentityUser> userMgr, IOrderRepository repoService, IUserProfileRepository userProfileRepository, Cart cartService,
-            ISessionManager sessionManager, IEmailService emailService)
+            IPaymentService paymentService, ISessionManager sessionManager, IEmailService emailService, IConfiguration configuration)
         {
-            userManager = userMgr;
-            repository = repoService;
-            this.userProfileRepository = userProfileRepository;
-            cart = cartService;
-            this.sessionManager = sessionManager;
-            this.emailService = emailService;
+            _userManager = userMgr;
+            _repository = repoService;
+            _userProfileRepository = userProfileRepository;
+            _cart = cartService;
+            _paymentService = paymentService;
+            _sessionManager = sessionManager;
+            _emailService = emailService;
+            _configuration = configuration;
+        }
+
+        [HttpPost]
+        [Route("webhook")]
+        public async Task<IActionResult> PaymentProcessingResult()
+        {
+            using var reader = new StreamReader(Request.Body);
+            var json = await reader.ReadToEndAsync();
+            var stripeEvent = EventUtility.ConstructEvent(json,
+                Request.Headers["Stripe-Signature"],
+                _configuration["Stripe:WebhookSecretKey"]);
+
+            if (stripeEvent.Type == "checkout.session.completed")
+            {
+                var session = stripeEvent.Data.Object as Session;
+                // TODO: Process further...
+            }
+
+            return Ok();
         }
 
         [HttpGet]
@@ -41,23 +69,23 @@ namespace ClothesShop.Controllers
 
             if (user == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            var userProfile = userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
 
             if (userProfile == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            var order = repository.Orders.Where(x => x.OrderId == orderId && x.Shipped == false).FirstOrDefault();
+            var order = _repository.Orders.Where(x => x.OrderId == orderId && x.Shipped == false).FirstOrDefault();
 
             if (order == null)
             {
-                sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(MessageConstants.ValidOrderWithSubmittedIdDoesNotExist, orderId));
+                _sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(MessageConstants.ValidOrderWithSubmittedIdDoesNotExist, orderId));
                 return RedirectToAction("OrdersByUser", "Home");
             }
 
@@ -72,31 +100,31 @@ namespace ClothesShop.Controllers
 
             if (user == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            var userProfile = userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
 
             if (userProfile == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            var order = repository.Orders.Where(x => x.OrderId == updatedOrder.OrderId && x.Shipped == false).FirstOrDefault();
+            var order = _repository.Orders.Where(x => x.OrderId == updatedOrder.OrderId && x.Shipped == false).FirstOrDefault();
 
             if (order == null)
             {
-                sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(MessageConstants.ValidOrderWithSubmittedIdDoesNotExist, updatedOrder.OrderId));
+                _sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(MessageConstants.ValidOrderWithSubmittedIdDoesNotExist, updatedOrder.OrderId));
                 return RedirectToAction("OrdersByUser", "Order");
             }
 
-            updatedOrder = repository.UpdateOrder(updatedOrder);
+            updatedOrder = _repository.UpdateOrder(updatedOrder);
 
             var content = EmailHelper.PrepareOrderEmail(updatedOrder, true);
 
-            emailService.SendEmail(updatedOrder.Email, $"Updated Order - {updatedOrder.Name} - {updatedOrder.Email}!", content);
+            _emailService.SendEmail(updatedOrder.Email, $"Updated Order - {updatedOrder.Name} - {updatedOrder.Email}!", content);
 
             return RedirectToAction("OrdersByUser", "Order");
         }
@@ -107,15 +135,15 @@ namespace ClothesShop.Controllers
 
             if (user == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            var userProfile = userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
 
             if (userProfile == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
@@ -126,6 +154,68 @@ namespace ClothesShop.Controllers
             return View(model);
         }
 
+        [HttpPost] // TODO: Finalize this
+        public async Task<IActionResult> ProcessOrder(Order order)
+        {
+            var user = GetCurrentUser();
+
+            if (user == null)
+            {
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                return RedirectToAction("", "Home");
+            }
+
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+
+            if (userProfile == null)
+            {
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                return RedirectToAction("", "Home");
+            }
+
+            if (_cart.Lines.Count() == 0)
+            {
+                ModelState.AddModelError("", "Sorry, your cart is empty!");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return RedirectToAction("Checkout", "Order");
+            }
+
+            order.Lines = _cart.Lines.Select(x => new CartLine() { Quantity = x.Quantity, Article = x.Article }).ToList();
+
+            order.UserProfileId = userProfile.Id;
+
+            var savedOrder = _repository.SaveOrder(order);
+            _cart.Clear();
+
+            var redirectUrl = await _paymentService.ProcessPayment(savedOrder,
+                successUrl: Url.Action("Completed", "Order", savedOrder.OrderId, Request.Scheme),
+                cancelUrl: Url.Action("Cancelled", "Order", savedOrder.OrderId, Request.Scheme));
+
+
+            return Redirect(redirectUrl);
+
+            //order = _repository.Orders
+            //    .Include(x => x.Lines)
+            //        .ThenInclude(x => x.Article)
+            //            .ThenInclude(x => x.ArticleType)
+            //    .AsNoTracking()
+            //    .FirstOrDefault(x => x.OrderId == savedOrder.OrderId);
+
+            //var content = EmailHelper.PrepareOrderEmail(order);
+
+            //_emailService.SendEmail(order.Email, $"New Order - {order.Name} - {order.Email}!", content);
+            //return RedirectToAction("Completed", "Order", new { orderId = order.OrderId });
+        }
+
+        [HttpGet]
+        public IActionResult Cancelled(int orderId)
+        {
+            return RedirectToPage("/Cart");
+        }
+
         [HttpPost]
         public IActionResult Checkout(Order order)
         {
@@ -133,33 +223,33 @@ namespace ClothesShop.Controllers
 
             if (user == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            var userProfile = userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
 
             if (userProfile == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            if (cart.Lines.Count() == 0)
+            if (_cart.Lines.Count() == 0)
             {
                 ModelState.AddModelError("", "Sorry, your cart is empty!");
             }
 
             if (ModelState.IsValid)
             {
-                order.Lines = cart.Lines;
+                order.Lines = _cart.Lines;
 
                 order.UserProfileId = userProfile.Id;
 
-                var savedOrder = repository.SaveOrder(order);
-                cart.Clear();
+                var savedOrder = _repository.SaveOrder(order);
+                _cart.Clear();
                 
-                order = repository.Orders
+                order = _repository.Orders
                     .Include(x => x.Lines)
                         .ThenInclude(x => x.Article)
                             .ThenInclude(x => x.ArticleType)
@@ -168,7 +258,7 @@ namespace ClothesShop.Controllers
 
                 var content = EmailHelper.PrepareOrderEmail(order);
 
-                emailService.SendEmail(order.Email, $"New Order - {order.Name} - {order.Email}!", content);
+                _emailService.SendEmail(order.Email, $"New Order - {order.Name} - {order.Email}!", content);
                 return RedirectToAction("Completed", "Order", new { orderId = order.OrderId});
             }
             else
@@ -182,15 +272,15 @@ namespace ClothesShop.Controllers
 
             if (user == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
-            var userProfile = userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
 
             if (userProfile == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToAction("", "Home");
             }
 
@@ -209,19 +299,19 @@ namespace ClothesShop.Controllers
             
             if (user == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToPage("/");
             }
 
-            var userProfile = userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
 
             if (userProfile == null)
             {
-                sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
                 return RedirectToPage("/");
             }
 
-            var orders = repository.Orders.Where(x => x.UserProfileId == userProfile.Id);
+            var orders = _repository.Orders.Where(x => x.UserProfileId == userProfile.Id);
             var viewModel = new OrdersByUserViewModel();
             viewModel.Orders = orders.Where(x => x.Shipped == false).ToList();
             viewModel.ShippedOrders = orders.Where(x => x.Shipped == true).ToList();
@@ -232,13 +322,13 @@ namespace ClothesShop.Controllers
         [Authorize]
         public IActionResult Cancel([FromForm] int OrderId)
         {
-            var order = repository.Orders.Where(x => x.OrderId == OrderId).FirstOrDefault();
+            var order = _repository.Orders.Where(x => x.OrderId == OrderId).FirstOrDefault();
 
             if(order != null)
             {
                 order.Canceled = true;
                 order.Note = "Cancelled by the user";
-                repository.SaveOrder(order);
+                _repository.SaveOrder(order);
             }
 
             return RedirectToAction("OrdersByUser", "Order");
@@ -248,13 +338,13 @@ namespace ClothesShop.Controllers
         [Authorize]
         public IActionResult ReturnToCart([FromForm] int OrderId)
         {
-            var order = repository.Remove(OrderId);
+            var order = _repository.Remove(OrderId);
 
             if(order != null)
             {
                 foreach(var line in order.Lines)
                 {
-                    cart.AddItem(line.Article, line.Quantity);
+                    _cart.AddItem(line.Article, line.Quantity);
                 }
             }
 
@@ -270,9 +360,9 @@ namespace ClothesShop.Controllers
                 return null;
             }
 
-            var user = userManager.FindByEmailAsync(claimName).Result;
+            var user = _userManager.FindByEmailAsync(claimName).Result;
 
-            var userByUsername = userManager.FindByNameAsync(claimName).Result;
+            var userByUsername = _userManager.FindByNameAsync(claimName).Result;
 
             if (userByUsername != null)
                 return userByUsername;

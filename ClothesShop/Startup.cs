@@ -15,6 +15,7 @@ using sib_api_v3_sdk.Client;
 using sib_api_v3_sdk.Model;
 using System.Collections.Generic;
 using System;
+using Stripe;
 
 namespace ClothesShop
 {
@@ -32,6 +33,9 @@ namespace ClothesShop
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+
+            string stripeKey = Configuration["Stripe:SecretKey"] ?? throw new Exception("Stripe SecretKey is not configured!");
+            StripeConfiguration.ApiKey = stripeKey;
 
             services.AddDbContext<DatabaseContext>(o =>
             {
@@ -55,6 +59,7 @@ namespace ClothesShop
             services.AddScoped<IStoreRepository, StoreRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+            services.AddScoped<IPaymentService, PaymentService>();
             services.AddRazorPages();
 
             services.AddDistributedMemoryCache();
