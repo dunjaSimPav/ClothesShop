@@ -1,0 +1,172 @@
+﻿@page "/admin/Articles/GroupAssignments/{id:long}"
+
+@using ClothesShop.Services
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Http
+@using ClothesShop.Models
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
+@using ClothesShop.Infrastructure
+@using ClothesShop.Repository
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Collections.Generic
+@using ClothesShop.Components
+@using System.ComponentModel.DataAnnotations
+@using System.IO
+@using System.Diagnostics
+
+@inject Localizer L
+
+@inherits OwningComponentBase<IStoreRepository>
+
+<style>
+    div.validation-message {
+        color: rgb(220, 53, 69);
+        font-weight: 500;
+    }
+</style>
+
+<h3 class="bg-@ThemeColor text-white text-center p-1">@L["Admin Article Groups Assignment Editor"]</h3>
+
+@if (ArticleGroups != null && ArticleGroupItems != null)
+{
+    <table class="table table-sm table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>@L["Admin Article Group ID"]</th>
+                <th>@L["Admin Article Group Name"]</th>
+                <th>@L["Admin Article Group Action"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var group in ArticleGroupItems)
+            {
+                long articleGroupId = group.ArticleGroupId;
+                <tr>
+                    <td>@group.ArticleGroup?.ArticleGroupId</td>
+                    <td>@group.ArticleGroup?.Name (@(group.ArticleGroup?.ParentArticleGroup?.Name ?? "N/A"))</td>
+                    <td><button class="btn btn-xs btn-warning" onclick="@(() => RemoveGroupFromList(articleGroupId))">@L["Admin Article Group Unassign"]</button></td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">
+                    <EditForm Model="CurrentItem" OnValidSubmit="AddArticleToGroup" OnInvalidSubmit="OnValidationFail">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="row">
+                            <div class="col-md-10">
+                                <ExtendedInputSelect class="selectpicker form-select w-100 h-100" @bind-Value="CurrentGroupId">
+                                    <option value="0">@L["Admin Article Group Select A Group"]</option>
+                                    @if (ArticleGroups != null)
+                                    {
+                                        @foreach (var group in ArticleGroups)
+                                        {
+                                            <option value="@group.ArticleGroupId">@group.Name (@group.ParentArticleGroup?.Name)</option>
+                                        }
+                                    }
+                                </ExtendedInputSelect>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100" onclick="@(() => AddArticleToGroup())">@L["Admin Article Group Add"]</button>
+                            </div>
+                        </div>
+                    </EditForm>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+
+
+    <button class="btn btn-@ThemeColor m-r-5" onclick="@(() => UpdateArticleGroupAssignments())">@L["Admin Save"]</button>
+
+    <NavLink class="btn btn-secondary" href="/admin/Articles">@L["Admin Back"]</NavLink>
+}
+
+@code {
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+
+    [Inject]
+    public IArticleGroupItemsRepository ArticleGroupItemsRepository { get; set; }
+
+    [Inject]
+    public IArticleGroupRepository ArticleGroupRepository { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+
+    public long? CurrentGroupId { get; set; }
+
+    public List<ArticleGroup> ArticleGroups { get; set; }
+
+    public List<ArticleGroupItem> ArticleGroupItems { get; set; }
+
+    public ArticleGroupItem CurrentItem { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ArticleGroups = await ArticleGroupRepository.GetArticleGroupsByParentId(null);
+
+        ArticleGroupItems = (await ArticleGroupItemsRepository.GetArticleGroupItemsByArticleId(Id)).Items ?? [];
+
+        CurrentItem = new ArticleGroupItem
+            {
+                ArticleId = Id,
+                ArticleGroupId = CurrentGroupId ?? 0
+            };
+    }
+
+    private void RemoveGroupFromList(long groupId)
+    {
+        var existingGroupEntry = ArticleGroupItems.FirstOrDefault(x => x.ArticleGroupId == groupId);
+        if (existingGroupEntry == null)
+            return;
+
+        ArticleGroupItems.Remove(existingGroupEntry);
+        StateHasChanged();
+    }
+
+    private void AddArticleToGroup()
+    {
+        if (CurrentGroupId is null)
+            return;
+
+        var existingGroupEntry = ArticleGroupItems.FirstOrDefault(x => x.ArticleGroupId == CurrentGroupId.Value);
+        if (existingGroupEntry != null)
+            return;
+
+
+        ArticleGroupItems.Add(new ArticleGroupItem()
+            {
+                ArticleId = Id,
+                ArticleGroupId = CurrentGroupId.Value,
+                ArticleGroup = ArticleGroups.FirstOrDefault(x => x.ArticleGroupId == CurrentGroupId.Value)
+            });
+
+        StateHasChanged();
+    }
+
+    public async Task UpdateArticleGroupAssignments()
+    {
+
+        var ids = ArticleGroupItems.Select(x => x.ArticleGroupId).Distinct().ToList();
+        await ArticleGroupItemsRepository.Reassign(new Models.ViewModels.ArticleGroupItems.ReassignArticleGroupsToItem
+            {
+                ArticleId = Id,
+                ArticleGroups = [.. ids],
+            });
+
+
+        NavManager.NavigateTo("/admin/Articles", forceLoad: true);
+    }
+
+
+    public async Task OnValidationFail(EditContext editContext)
+    {
+        await Task.Delay(10);
+    }
+
+    public string ThemeColor => Id > 0 ? "warning" : "primary";
+}

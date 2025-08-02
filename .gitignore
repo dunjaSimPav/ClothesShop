@@ -338,3 +338,5 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+/ClothesShop/appsettings.Local.json
+/ClothesShop/appsettings.Local.json

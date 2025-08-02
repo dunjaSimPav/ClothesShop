@@ -1,12 +1,15 @@
-﻿@using Microsoft.AspNetCore.Components.Routing
+﻿@using ClothesShop.Services
+@using Microsoft.AspNetCore.Components.Routing
 
 @inherits LayoutComponentBase
+
+@inject Localizer L
 
 <div class="bg-info text-white p-2">
     <div class="container-fluid">
         <div class="row">
             <div class="col">
-                <span class="navbar-brand ml-2"><NavLink class="nav-link text-white" href="/">Clothes Shop - ADMIN</NavLink></span>
+                <span class="navbar-brand ml-2"><NavLink class="nav-link text-white" href="/">@L["Clothes Shop - ADMIN"]</NavLink></span>
             </div>
         </div>
     </div>
@@ -20,26 +23,26 @@
                      href="/admin/Articles"
                      ActiveClass="btn-primary text-white"
                      Match="NavLinkMatch.Prefix">
-                Articles
+                @L["Admin Articles"]
             </NavLink>
             <NavLink class="btn btn-outline-primary btn-block"
-                     href="/admin/ArticleTypes"
+                     href="/admin/ArticleGroups"
                      ActiveClass="btn-primary text-white"
                      Match="NavLinkMatch.Prefix">
-                Article types
+                @L["Admin Article Groups"]
             </NavLink>
             <NavLink class="btn btn-outline-primary btn-block"
                      href="/admin/orders"
                      ActiveClass="btn-primary text-white"
                      Match="NavLinkMatch.Prefix">
-                Orders
+                @L["Admin Orders"]
             </NavLink>
 
             <NavLink class="btn btn-outline-primary btn-block"
                      href="/account/logout"
                      ActiveClass="btn-primary text-white"
                      Match="NavLinkMatch.Prefix">
-                Log Out
+                @L["Admin Log Out"]
             </NavLink>
         </div>
         <div class="col">
@@ -47,3 +50,4 @@
         </div>
     </div>
 </div>
+

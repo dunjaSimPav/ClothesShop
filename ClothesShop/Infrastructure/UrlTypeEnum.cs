@@ -11,7 +11,9 @@
         [System.ComponentModel.Description("Delete")]
         Delete,
         [System.ComponentModel.Description("List")]
-        List
+        List,
+        [System.ComponentModel.Description("GroupAssignments")]
+        GroupAssignments
     }
     
     public static class UrlHelper

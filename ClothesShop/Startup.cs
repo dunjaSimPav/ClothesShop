@@ -10,32 +10,44 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ClothesShop.Services;
-using sib_api_v3_sdk.Api;
-using sib_api_v3_sdk.Client;
-using sib_api_v3_sdk.Model;
-using System.Collections.Generic;
 using System;
 using Stripe;
+using Microsoft.Extensions.Localization;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.DataProtection;
+using System.IO;
 
 namespace ClothesShop
 {
     public class Startup
     {
         public IConfiguration Configuration { get; set; }
+        public IWebHostEnvironment _env { get; set; }
 
-        public Startup(IConfiguration config)
+        public Startup(IConfiguration config, IWebHostEnvironment env)
         {
             Configuration = config;
+            _env = env ?? throw new ArgumentNullException(nameof(env));
         }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
 
             string stripeKey = Configuration["Stripe:SecretKey"] ?? throw new Exception("Stripe SecretKey is not configured!");
             StripeConfiguration.ApiKey = stripeKey;
+
+            services.AddLocalization();
+
+            services.AddSignalR(o => o.MaximumReceiveMessageSize = 104857600); // 100 MB
+
+            services.AddHttpClient();
+
+            services.AddServerSideBlazor();
+
+            services.Configure<FormOptions>(o => { o.MultipartBodyLengthLimit = 104857600; });
+
+            services.AddSingleton(x => new Localizer(x.GetRequiredService<IStringLocalizerFactory>(), typeof(Resource)));
 
             services.AddDbContext<DatabaseContext>(o =>
             {
@@ -50,6 +62,17 @@ namespace ClothesShop
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<IdentityContext>();
 
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new System.IO.DirectoryInfo(Path.Combine(_env.ContentRootPath, "keys")))
+                .SetApplicationName("ClothesShop")
+                .UseCryptographicAlgorithms(new Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorConfiguration()
+                {
+                    EncryptionAlgorithm = Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.EncryptionAlgorithm.AES_256_CBC,
+                    ValidationAlgorithm = Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ValidationAlgorithm.HMACSHA256
+                });
+
+            services.AddAuthentication();
+
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("RequireAdministratorRole",
@@ -60,6 +83,8 @@ namespace ClothesShop
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<IUserProfileRepository, UserProfileRepository>();
             services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IArticleGroupRepository, ArticleGroupRepository>();
+            services.AddScoped<IArticleGroupItemsRepository, ArticleGroupItemsRepository>();
             services.AddRazorPages();
 
             services.AddDistributedMemoryCache();
@@ -68,12 +93,9 @@ namespace ClothesShop
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
             services.AddScoped<ISessionManager, SessionManager>();
-            services.AddScoped<IEmailService, EmailService>();
 
             services.AddServerSideBlazor();
         }
-
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsProduction())
@@ -94,22 +116,22 @@ namespace ClothesShop
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints => {
-                endpoints.MapControllerRoute("ArticleTypepage", "{ArticleType:int}/Page{ArticlePage:int}",
-                    new { Controller = "Home", action = "Index" });
+
+                endpoints.MapControllerRoute("Index", "", new { Controller = "Home", action = "Index" });
 
                 endpoints.MapControllerRoute("OrderEditPage", "Order/Edit/{orderId:int}",
                     new { Controller = "Order", action = "Edit" });
 
-                endpoints.MapControllerRoute("page", "Page{ArticlePage:int}",
-                    new { Controller = "Home", action = "Index", ArticlePage = 1 });
-
-                endpoints.MapControllerRoute("ArticleType", "{ArticleType}",
+                endpoints.MapControllerRoute("ArticleGroup", "{ArticleGroup}",
                     new { Controller = "Home", action = "Index", ArticlePage = 1 });
 
                 endpoints.MapControllerRoute("pagination", "Articles/{ArticlePage:int}",
                     new { Controller = "Home", action = "Index", ArticlePage = 1 });
 
                 endpoints.MapDefaultControllerRoute();
+
+                endpoints.MapControllers();
+
                 endpoints.MapRazorPages();
                 endpoints.MapBlazorHub();
 

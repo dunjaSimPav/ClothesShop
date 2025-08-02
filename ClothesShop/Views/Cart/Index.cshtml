@@ -1,15 +1,17 @@
 ﻿@model Cart
 
+@inject Localizer L
+
 <section id="portfolio" class="portfolio cart-section">
     <div class="container aos-init aos-animate">
-        <h2>Your cart</h2>
+        <h2>@L["Your cart"]</h2>
         <table class="table table-bordered table-striped">
             <thead>
                 <tr>
-                    <th>Quantity</th>
-                    <th>Item</th>
-                    <th class="text-right">Price</th>
-                    <th class="text-right">Subtotal</th>
+                    <th>@L["Quantity"]</th>
+                    <th>@L["Item"]</th>
+                    <th class="text-right">@L["Price"]</th>
+                    <th class="text-right">@L["Subtotal"]</th>
                 </tr>
             </thead>
             <tbody>
@@ -17,15 +19,15 @@
                 {
                     <tr>
                         <td class="text-center">@item.Quantity</td>
-                        <td class="text-left">@item.Article.Name</td>
-                        <td class="text-right">@item.Article.Price.ToString("c")</td>
-                        <td class="text-right">@((item.Quantity * item.Article.Price).ToString("c"))</td>
+                        <td class="text-left">@item.ArticleName</td>
+                        <td class="text-right">@item.Price.ToString("#,###.00") RSD</td>
+                        <td class="text-right">@((item.Quantity * item.Price).ToString("#,###.00")) RSD</td>
                         <td class="text-center">
                             <form asp-controller="Cart" asp-action="Delete" method="post">
                                 <input type="hidden" name="ArticleId"
-                                       value="@item.Article.ArticleId" />
+                                       value="@item.ArticleId" />
                                 <button type="submit" class="danger-btn">
-                                    Remove
+                                    @L["Remove"]
                                 </button>
                             </form>
                         </td>
@@ -34,15 +36,15 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3" class="text-right">Total:</td>
-                    <td class="text-right">@Model.ComputeTotalValue().ToString("c")</td>
+                    <td colspan="3" class="text-right">@L["Total:"]</td>
+                    <td class="text-right">@Model.ComputeTotalValue().ToString("#,##0.00") RSD</td>
                 </tr>
             </tfoot>
         </table>
         <div class="text-center">
-            <a class="confirm-btn" asp-controller="Home" asp-action="Index" asp-fragment="portfolio">Continue shopping</a>
+            <a class="confirm-btn" asp-controller="Home" asp-action="Index" asp-fragment="portfolio">@L["Continue shopping"]</a>
             <a class="confirm-btn" asp-action="Checkout" asp-controller="Order">
-                Checkout
+                @L["Checkout"]
             </a>
         </div>
     </div>

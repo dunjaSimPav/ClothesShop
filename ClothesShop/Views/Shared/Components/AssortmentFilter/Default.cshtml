@@ -1,0 +1,156 @@
+﻿@model AssortmentFilterViewModel
+
+@inject Localizer L
+
+@using (Html.BeginForm("Index", "Home", FormMethod.Get, htmlAttributes: new { @class = "row px-1" })) // Or FormMethod.Post
+{
+    <div>
+        @Html.Hidden("articleGroup", Model.CurrentGroupId)
+        @Html.Hidden("articleSubGroup", Model.CurrentSubGroupId)
+        @Html.Hidden("currentPage", 1)
+
+        <div class="form-group mb-2">
+            <label for="typefilter">@L["Category"]</label>
+            @foreach (var category in Model.Categories)
+            {
+                <partial name="Components/CategoryFilter/Default" model="@category" />
+            }
+        </div>
+
+        <div class="form-group mb-2">
+            <label>@L["Sort Asc Desc"]</label>
+            <div class="btn-group btn-group-toggle" role="group" data-toggle="buttons">
+                <label class="btn btn-secondary @(Model.SortOrder == 1 ? "active" : "")" id="sortAsc">
+                    <input type="radio" id="sortAscInput" value="1" autocomplete="off" class="d-none" @(Model.SortOrder == 1 ? "checked" : "") />
+                    <i class="fa fa-sort-amount-desc"></i>
+                </label>
+                <label class="btn btn-secondary @(Model.SortOrder == 0 ? "active" : "")" id="dontSort">
+                    <input type="radio" id="dontSortInput" value="0" autocomplete="off" class="d-none" @(Model.SortOrder == 0 ? "checked" : "") />
+                    <i class="fa fa-bars"></i>
+                </label>
+                <label class="btn btn-secondary @(Model.SortOrder == -1 ? "active" : "")" id="sortDesc">
+                    <input type="radio" id="sortDescInput" value="-1" autocomplete="off" class="d-none" @(Model.SortOrder == -1 ? "checked" : "") />
+                    <i class="fa fa-sort-amount-asc"></i>
+                </label>
+
+                <input type="hidden" id="sortOrder" name="sortOrder" value="@(Model.SortOrder)" />
+            </div>
+        </div>
+
+        <div class="form-group mb-2">
+            <label>@L["Price Filter"]</label>
+            @await Component.InvokeAsync("RangeSlider", Model)
+        </div>
+
+        <div class="form-group mb-2">
+            <label>@L["Items Per Page"]</label>
+            @Html.DropDownList("itemsPerPage", Model.ItemsPerPageOptions, @L["Default 6"], new { @class = "form-control" })
+        </div>
+
+        <div class="form-group btn-group mb-2">
+            <div class="btn-group" role="group">
+                <button type="submit" class="btn btn-primary">@L["Apply Filters"]</button>
+
+                <button type="reset" class="btn btn-secondary">@L["Clear Filters"]</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const hiddenInput = document.getElementById('sortOrder');
+          
+          document.querySelector('form').addEventListener('submit', function (e) {
+            let selectedSort = document.querySelector('.btn-group-toggle > label.active > input[type="radio"]')
+
+            hiddenInput.value = selectedSort.value;
+
+            console.log(selectedSort);
+            console.log(hiddenInput);
+          });
+
+          const radios = document.querySelectorAll('.btn-group-toggle > label > input[type="radio"]');
+
+          radios.forEach(radio => {
+            radio.addEventListener("change", function () {
+              // Find the parent btn-group-toggle div
+              const btnGroup = radio.closest('.btn-group-toggle');
+
+              if (!btnGroup) return;
+
+              // Remove 'active' from all labels inside this group
+              btnGroup.querySelectorAll('label.btn').forEach(label => {
+                label.classList.remove('active');
+              });
+
+              // Add 'active' to the label that contains the checked radio
+              const activeLabel = radio.closest('label.btn');
+              if (activeLabel) {
+                activeLabel.classList.add('active');
+              }
+            });
+          });
+
+          const clearFiltersBtn = document.querySelector('button[type="reset"]');
+          clearFiltersBtn.addEventListener('click', function() {
+              console.log('Reset triggered...');
+
+              radios.forEach(radio => {
+                  // Find the parent btn-group-toggle div
+                  const btnGroup = radio.closest('.btn-group-toggle');
+
+                  if (!btnGroup) return;
+
+                  // Remove 'active' from all labels inside this group
+
+                  const radioLabel = radio.parentElement;
+
+                  radioLabel.classList.remove('active');
+
+                  if (radio.id != 'dontSortInput') {
+                    return;
+                  }
+
+                  console.log(radioLabel);
+                  radioLabel.classList.add('active');
+
+                  radio.setAttribute('checked', true);
+              });
+              const minPrice = document.querySelector('#fromInput');
+              const maxPrice = document.querySelector('#toInput');
+              const minSlider = document.querySelector('#fromSlider');
+              const maxSlider = document.querySelector('#toSlider');
+
+              const minSliderMin = minSlider.getAttribute('min');
+              const maxSliderMax = maxSlider.getAttribute('max');
+
+              minPrice.setAttribute('value', minSliderMin);
+              maxPrice.setAttribute('value', maxSliderMax);
+              minSlider.setAttribute('value', minSliderMin);
+              maxSlider.setAttribute('value', maxSliderMax);
+
+              const event = new Event('input', {
+                bubbles: true,
+                cancelable: true,
+              });
+
+              minSlider.dispatchEvent(event);
+              maxSlider.dispatchEvent(event);
+
+              const itemsPerPageDropdown = document.querySelectorAll('select#itemsPerPage > option');
+
+              itemsPerPageDropdown.forEach(option => {
+                  if (option.value != '6') {
+                    option.removeAttribute('selected');
+                  }
+                  else {
+                    option.setAttribute('selected', 'selected');
+                  }
+              });
+
+              const sortOrderHiddenField = document.querySelector("#sortOrder");
+              sortOrderHiddenField.setAttribute('value', 0);
+
+          });
+        });
+    </script>
+}

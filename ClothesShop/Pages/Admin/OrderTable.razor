@@ -1,71 +1,186 @@
-﻿@using ClothesShop.Models
+﻿@using ClothesShop.Infrastructure
+@using ClothesShop.Models
+@using ClothesShop.Models.ViewModels
+@using ClothesShop.Repository
+@using ClothesShop.Services
 @using Microsoft.AspNetCore.Components.Web
 
-<table class="table table-sm table-striped table-bordered">
+@inject Localizer L
+@inject IOrderRepository Repository
+
+<table class="table">
     <thead>
-        <tr><th colspan="6" class="text-center">@TableTitle</th></tr>
+        <tr>
+            <th>
+                @L["Basic Details"]
+            </th>
+            <th colspan="3">
+                @L["Articles"]
+            </th>
+        </tr>
     </thead>
     <tbody>
-        @if (Orders?.Count() > 0)
+        @if (Orders != null && Orders.Count() > 0 && Loaded)
         {
-            @foreach (Order o in Orders)
+            @foreach (var item in Orders)
             {
                 <tr>
-                    <td>@o.Name</td>
-                    <td>@o.Zip</td>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    @if(o.Canceled)
-                    {
-                        <td></td>
-                    } else
-                    {
-                        
                     <td>
-                        <button class="btn btn-sm btn-danger"
-                                @onclick="@(() => OrderSelected.InvokeAsync(o.OrderId))">
-                            @ButtonLabel
-                        </button>
+                        @($"#{item.OrderId}")<br />
+                        @($"{item.Name} ({item.Email})")<br />
+                        @($"{item.Address}, {item.City} ({item.Zip}), {item.Country}")<br />
+                        @(item.GiftWrap ? L["Gift Wrap"] : L["No Gift Wrap"])<br />
+                        @($"{L["Order Status"]}: {item.Status.Translate()}")<br />
+                        @($"{L["Order Note"]}: " + (string.IsNullOrEmpty(item.Note) ? L["Order Note Empty"] : item.Note))
                     </td>
-                    }
-                    @if(o.Canceled || o.Shipped)
-                    {
-                        <td></td>
-                    } else
-                    {
                     <td>
-                        <button class="btn btn-sm btn-danger"
-                                @onclick="@(() => OrderCanceled.InvokeAsync(o.OrderId))">
-                            Cancel
-                        </button>
-                    </td>
-                    }
-                    <td>@o.Note</td>
-                </tr>
 
-                @foreach (CartLine line in o.Lines)
-                {
-                    <tr>
-                        <td colspan="2"></td>
-                        <td>@line.Article.Name</td>
-                        <td>@line.Quantity</td>
-                    </tr>
-                }
+                        <table class="table">
+                            <tbody>
+                                @foreach (var line in item.Lines)
+                                {
+                                    <tr>
+                                        <td>@line.Article?.Name</td>
+                                        <td>@("x" + line.Quantity)</td>
+                                        <td>@(Math.Round(line.Quantity * line.Price, 2).ToString("#,##0.00") + " RSD")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-color: transparent">
+                                    <td>
+                                        @L["Order Total"]
+                                    </td>
+                                    <td>
+                                    </td>
+                                    <td>
+                                        @(Math.Round(item.Lines.Sum(x => (x.Quantity * x.Price)), 2).ToString("#,##0.00") + " RSD")
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </td>
+                    <td>
+                    </td>
+                    @if (true)
+                    {
+                        <td class="lower-padding">
+                            <div class="d-flex">
+                                @if (item.Status == ClothesShop.Enums.PaymentStatus.Pending 
+                            || item.Status == ClothesShop.Enums.PaymentStatus.Failed)
+                                {
+                                    <button class="btn btn-sm btn-danger"
+                                        onclick="@(() => CancelOrder(item.OrderId))">
+                                        @L["Admin Cancel Order"]
+                                    </button>
+                                }
+
+                                @if (item.Status == ClothesShop.Enums.PaymentStatus.Paid && !item.Shipped)
+                                {
+                                    <button class="btn btn-sm btn-danger"
+                                        onclick="@(() => ShipOrder(item.OrderId))">
+                                        @L["Admin Ship Order"]
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    }
+                </tr>
             }
+        }
+        else if (!Loaded)
+        {
+            <tr>
+                <td colspan="4">
+                    <h5 class="font-weight-bold">@TableTitle - @L["Loading..."]</h5>
+                </td>
+            </tr>
         }
         else
         {
-            <tr><td colspan="5" class="text-center">No Orders</td></tr>
+            <tr>
+                <td colspan="4">
+                    <h5 class="font-weight-bold">@TableTitle - @L["No Orders"]</h5>
+                </td>
+            </tr>
         }
     </tbody>
 </table>
 
 
+<Pagination PagingInfo="PagingInfoData" OnPagingInfoChanged="OnPagingInfoChanged" />
 
 @code {
-    [Parameter] public string TableTitle { get; set; } = "Orders";
-    [Parameter] public IEnumerable<Order> Orders { get; set; }
-    [Parameter] public string ButtonLabel { get; set; } = "Ship";
-    [Parameter] public EventCallback<int> OrderSelected { get; set; }
-    [Parameter] public EventCallback<int> OrderCanceled { get; set; }
+    [Parameter] public bool Shipped { get; set; }
+
+    [Parameter] public string TableTitle { get; set; }
+
+    public IEnumerable<Order> Orders { get; set; }
+
+    public bool Loaded { get; set; }
+
+    public PagingInfo PagingInfoData { get; set; } = new()
+    {
+        CurrentPage = 1,
+        ItemsPerPage = 10,
+        TotalItems = 100
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await UpdateData();
+    }
+
+    public async Task UpdateData()
+    {
+        Loaded = false;
+
+        PagingInfoData = new PagingInfo
+            {
+                CurrentPage = 1,
+                ItemsPerPage = 10,
+                TotalItems = await Repository.GetOrdersPaginatedAdminCount(Shipped)
+            };
+
+        Loaded = true;
+    }
+
+    public async Task ShipOrder(long id)
+    {
+        await UpdateOrder(id, true);
+        await UpdateData();
+    }
+
+    public async Task ResetOrder(long id)
+    {
+        await UpdateOrder(id, false);
+        await UpdateData();
+    }
+
+    private async Task UpdateOrder(long id, bool shipValue)
+    {
+        Order o = await Repository.GetOrderById(id);
+        o.Shipped = shipValue;
+        Repository.UpdateOrder(o);
+    }
+
+    public async Task CancelOrder(long id)
+    {
+        Order o = await Repository.GetOrderById(id);
+        o.Status = Enums.PaymentStatus.Cancelled;
+        o.Note = L["Order was cancelled by an administrator"];
+        Repository.UpdateOrder(o);
+    }
+
+    private async Task OnPagingInfoChanged(PagingInfo args)
+    {
+        PagingInfoData = new()
+            {
+                CurrentPage = args.CurrentPage,
+                ItemsPerPage = args.ItemsPerPage,
+                TotalItems = PagingInfoData.TotalItems
+            };
+
+        Orders = await Repository.GetOrdersPaginatedAdmin(PagingInfoData.CurrentPage, PagingInfoData.ItemsPerPage, Shipped);
+    }
 }

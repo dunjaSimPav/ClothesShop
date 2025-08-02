@@ -8,24 +8,28 @@ using Microsoft.AspNetCore.Http;
 using ClothesShop.Models;
 using System.Text.RegularExpressions;
 using ClothesShop.Infrastructure;
+using ClothesShop.Services;
 
 namespace ClothesShop.Components
 {
     public class NavigationMenuViewComponent : ViewComponent
     {
-        private readonly List<NavigationEntryModel> _entries = new List<NavigationEntryModel>()
-        {
-            new NavigationEntryModel(1, "Home", "Index", "Home", param: "header", internalId: "#header", isLocal: true),
-            new NavigationEntryModel(2, "Home", "Index", "Portfolio", param: "portfolio", internalId: "#portfolio", isLocal: true),
-            new NavigationEntryModel(3, "Home", "Index", "Contact", param: "contact", internalId: "#contact", isLocal: true),
-            new NavigationEntryModel(4, "Cart", "", "Cart"),
-            //new NavigationEntryModel(5, "Account", "Login", "Get Started", internalId: "#", isButton: true, isLogin: true),
-        };
+        private readonly List<NavigationEntryModel> _entries;
 
         private Cart _cart;
-        public NavigationMenuViewComponent(Cart cartService)
+        private readonly Localizer _l;
+        public NavigationMenuViewComponent(Cart cartService, Localizer localizer)
         {
             _cart = cartService;
+            _l = localizer;
+            _entries = new List<NavigationEntryModel>()
+            {
+                new NavigationEntryModel(1, "Home", "Index", _l["Home"], param: "header", internalId: "#header", isLocal: true),
+                new NavigationEntryModel(2, "Home", "Index", _l["Portfolio"], param: "portfolio", internalId: "#portfolio", isLocal: true),
+                new NavigationEntryModel(3, "Home", "Index", _l["ContactUs"], param: "contact", internalId: "#contact", isLocal: true),
+                new NavigationEntryModel(4, "Cart", "", _l["Cart"]),
+                //new NavigationEntryModel(5, "Account", "Login", "Get Started", internalId: "#", isButton: true, isLogin: true),
+            };
         }
 
         public ViewViewComponentResult Invoke()
@@ -35,7 +39,6 @@ namespace ClothesShop.Components
             List<PathString> paths = new List<PathString>()
             {
                 "/",
-                "/Page",
                 "/Home"
             };
 
@@ -61,16 +64,12 @@ namespace ClothesShop.Components
             if (_cart.Lines.Count > 0)
             {
                 var total = _cart.ComputeTotalValue();
-                cart.Title += string.Format(" ({0:C})", total);
+                cart.Title += " (" + total.ToString("#,###.00") + " RSD)";
             }
             
-            //int? indexOfOther = _entries.FirstOrDefault(x => url.StartsWithSegments($"/{x.Controller}/{x.Action}"))?.Id;
-
-
             var model = new NavigationPageModel()
             {
-                //ActiveId = home ? 1 : indexOfOther!.Value,
-                NavigationEntries = new List<NavigationEntryModel>(_entries)
+                NavigationEntries = [.. _entries]
             };
             return View(model);
         }

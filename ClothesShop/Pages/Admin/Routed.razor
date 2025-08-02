@@ -1,5 +1,8 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
+﻿@using ClothesShop.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Routing
+
+@inject Localizer L
 
 <Router AppAssembly="typeof(Startup).Assembly">
     <Found>
@@ -7,7 +10,7 @@
     </Found>
     <NotFound>
         <h4 class="bg-danger text-white text-center p-2">
-            No matching route found!
+            @L["Admin Global No Route Found"]
         </h4>
     </NotFound>
 </Router>

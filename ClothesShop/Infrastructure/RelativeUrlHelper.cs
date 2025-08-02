@@ -18,8 +18,6 @@ namespace ClothesShop.Infrastructure
 
             if (string.IsNullOrEmpty(controller)) return "#";
 
-            //if (isLocal) return urlPositionParam;
-
             if (string.IsNullOrEmpty(action)) return $"/{controller}";
 
             return $"/{controller}/{action}{idParam}{urlPositionParam}";

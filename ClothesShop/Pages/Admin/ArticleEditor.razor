@@ -1,7 +1,8 @@
 ﻿@page "/admin/Articles/edit/{id:long}"
 
 @page "/admin/Articles/create"
- 
+
+@using ClothesShop.Services
 @using Microsoft.AspNetCore.Hosting
 @using Microsoft.AspNetCore.Http
 @using ClothesShop.Models
@@ -15,71 +16,66 @@
 @using System.ComponentModel.DataAnnotations
 @using System.IO
 @using System.Diagnostics
+@using System.Net.Http
+
+@inject Localizer L
+@inject IHttpContextAccessor _httpContext;
 
 @inherits OwningComponentBase<IStoreRepository>
+
 
 <style>
     div.validation-message { color: rgb(220, 53, 69); font-weight: 500; }
 </style>
 
-<h3 class="bg-@ThemeColor text-white text-center p-1">@TitleText an Article</h3>
+<h3 class="bg-@ThemeColor text-white text-center p-1">@(Id > 0 ? @L["Admin Article Edit"] : @L["Admin Article Create"])</h3>
 
-<EditForm Model=@Article OnValidSubmit="SaveArticle" OnInvalidSubmit="OnValidationFail">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+@if (Article != null)
+{
 
-    @if (Article.ArticleId > 0)
-    {
+
+    <EditForm Model=@Article OnValidSubmit="SaveArticle" OnInvalidSubmit="OnValidationFail">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @if (Article.ArticleId > 0)
+        {
+            <div class="form-group">
+                <label>@L["Admin Article ID"]</label>
+                <input class="form-control" disabled value="@Article.ArticleId" />
+            </div>
+        }
+
         <div class="form-group">
-            <label>ID</label>
-            <input class="form-control" disabled value="@Article.ArticleId" />
+            <label>@L["Admin Article Name"]</label>
+            <ValidationMessage For="@(() => Article.Name)" />
+            <InputText class="form-control" @bind-Value="Article.Name" />
         </div>
-    }
 
-    <div class="form-group">
-        <label>Name</label>
-        <ValidationMessage For="@(() => Article.Name)" />
-        <InputText class="form-control" @bind-Value="Article.Name" />
-    </div>
+        <div class="form-group">
+            <label>@L["Admin Article Description"]</label>
+            <ValidationMessage For="@(() => Article.Description)" />
+            <InputTextArea class="form-control" @bind-Value="Article.Description" />
+        </div>
 
-    <div class="form-group">
-        <label>Description</label>
-        <ValidationMessage For="@(() => Article.Description)" />
-        <InputTextArea class="form-control" @bind-Value="Article.Description" />
-    </div>
+        <div class="form-group">
+            <label>@L["Admin Article Price"] (RSD)</label>
+            <ValidationMessage For="@(() => Article.Price)" />
+            <InputNumber class="form-control" @bind-Value="Article.Price" />
+        </div>
 
-    <div class="form-group">
-        <label>ArticleType</label>
-        <ValidationMessage For="@(() => Article.ArticleTypeId)" />
-        <ExtendedInputSelect class="form-control selectpicker" @bind-Value="Article.ArticleTypeId">
-            <option value="0">Select a ArticleType</option>
-            @if (ArticleTypes != null)
-            {
-                @foreach (var ArticleType in ArticleTypes)
-                {
-                    <option value="@ArticleType.ArticleTypeId">@ArticleType.Name</option>
-                }
-            }
-        </ExtendedInputSelect>
-    </div>
+        <div class="form-group">
+            <label>@L["Admin Article Picture"]</label>
+            <ValidationMessage For="@(() => Article.Image)" />
+            <img style="max-height: 256px" src="@Article.Image" />
+            <InputFile id="imgSelector" class="form-control" OnChange="UploadImage" multiple="false" placeholder="@L["Choose a file"]" />
+        </div>
 
-    <div class="form-group">
-        <label>Price</label>
-        <ValidationMessage For="@(() => Article.Price)" />
-        <InputNumber class="form-control" @bind-Value="Article.Price" />
-    </div>
+        <button type="submit" class="btn btn-@ThemeColor" disabled="@(!CanSave)">@L["Admin Save"]</button>
 
-    <div class="form-group">
-        <label>Picture</label>
-        <ValidationMessage For="@(() => Article.Image)" />
-        <img style="max-height: 256px" src="@Article.Image" />
-        <InputFile id="imgSelector" class="form-control" OnChange="UploadImage" multiple="false" />
-    </div>
-
-    <button type="submit" class="btn btn-@ThemeColor" disabled="@(!CanSave)">Save</button>
-
-    <NavLink class="btn btn-secondary" href="/admin/Articles">Cancel</NavLink>
-</EditForm>
+        <NavLink class="btn btn-secondary" href="/admin/Articles">@L["Admin Back"]</NavLink>
+    </EditForm>
+}
 
 @code {
 
@@ -92,24 +88,30 @@
     [Inject]
     public IWebHostEnvironment WebHostEnvironment { get; set; }
 
+    [Inject]
+    public IArticleGroupItemsRepository ArticleGroupItemsRepository { get; set; }
+
+    [Inject]
+	public HttpClient HttpClient { get; set; }
+
     [Parameter]
     public long Id { get; set; }
 
     public Article Article { get; set; }
 
-    public List<ArticleType> ArticleTypes { get; set; }
-
     public bool CanSave { get; set; } = true;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (Id > 0)
-            Article = Repository.Articles.FirstOrDefault(x => x.ArticleId == Id);
+            Article = await Repository.GetArticleWithDetails(Id);
         else
-            Article = new Article();
-
-        ArticleTypes = Repository.ArticleTypes.ToList();
+            Article = new Article()
+                {
+                    ArticleGroupItems = new()
+                };
     }
+
 
     public async Task OnValidationFail(EditContext editContext)
     {
@@ -122,10 +124,10 @@
 
         if(Id > 0)
         {
-            Repository.SaveArticle(Article);
+            await Repository.SaveArticle(Article);
         } else
         {
-            Repository.CreateArticle(Article);
+            await Repository.CreateArticle(Article);
         }
 
         await Task.Delay(300);
@@ -137,19 +139,34 @@
         if (args.File == null || !CanSave) return;
 
         CanSave = false;
-        string uniqueFileName = Guid.NewGuid().ToString() + "_" + args.File.Name;
-        string uniquePath = System.IO.Path.Combine("assets", "products", uniqueFileName);
-        var filePath = System.IO.Path.Combine(this.WebHostEnvironment.WebRootPath, uniquePath);
 
-        using var fs = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write);
-        await args.File.OpenReadStream().CopyToAsync(fs);
-        await fs.FlushAsync();
-        fs.Close();
+        var content = new MultipartFormDataContent();
+        using var stream = args.File.OpenReadStream(maxAllowedSize: 1_048_576_00); // 1 GB max size)
+        content.Add(new StreamContent(stream), "image", args.File.Name);
 
-        Article.Image = filePath.Replace(this.WebHostEnvironment.WebRootPath, "").Replace("\\", "/");
+        var cookiesDictionary = _httpContext.HttpContext.Request.Cookies;
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"http://localhost:5000/api/upload/image")
+            {
+                Content = content
+            };
+
+        string cookies = string.Join("; ", cookiesDictionary.Select(c => $"{c.Key}={c.Value}"));
+
+        request.Headers.Add("Cookie", cookies);
+
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            // Handle error
+            return;
+        }
+
+        var filePath = await response.Content.ReadAsStringAsync();
+
+        Article.Image = filePath;
         CanSave = true;
     }
 
     public string ThemeColor => Id > 0 ? "warning" : "primary";
-    public string TitleText => Id > 0 ? "Edit" : "Create";
 }

@@ -1,0 +1,504 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Address" xml:space="preserve">
+    <value>Adresa</value>
+  </data>
+  <data name="Address:" xml:space="preserve">
+    <value>Adresa:</value>
+  </data>
+  <data name="Admin Article Assign Groups" xml:space="preserve">
+    <value>Dodeli grupu</value>
+  </data>
+  <data name="Admin Article Create" xml:space="preserve">
+    <value>Kreiranje artikla</value>
+  </data>
+  <data name="Admin Article Delete" xml:space="preserve">
+    <value>Obriši</value>
+  </data>
+  <data name="Admin Article Description" xml:space="preserve">
+    <value>Opis artikla</value>
+  </data>
+  <data name="Admin Article Details" xml:space="preserve">
+    <value>Detalji</value>
+  </data>
+  <data name="Admin Article Edit" xml:space="preserve">
+    <value>Ažuriraj</value>
+  </data>
+  <data name="Admin Article Group Action" xml:space="preserve">
+    <value> </value>
+  </data>
+  <data name="Admin Article Group Add" xml:space="preserve">
+    <value>Dodeli</value>
+  </data>
+  <data name="Admin Article Group Create" xml:space="preserve">
+    <value>Kreiranje grupe artikala</value>
+  </data>
+  <data name="Admin Article Group Delete" xml:space="preserve">
+    <value>Obriši</value>
+  </data>
+  <data name="Admin Article Group Description" xml:space="preserve">
+    <value>Opis grupe artikala</value>
+  </data>
+  <data name="Admin Article Group Detail" xml:space="preserve">
+    <value>Detalji o grupi</value>
+  </data>
+  <data name="Admin Article Group Details" xml:space="preserve">
+    <value>Detalji grupe artikala</value>
+  </data>
+  <data name="Admin Article Group Edit" xml:space="preserve">
+    <value>Ažuriraj</value>
+  </data>
+  <data name="Admin Article Group ID" xml:space="preserve">
+    <value>Šifra grupe artikala</value>
+  </data>
+  <data name="Admin Article Group Name" xml:space="preserve">
+    <value>Naziv grupe artikala</value>
+  </data>
+  <data name="Admin Article Group Parent Group" xml:space="preserve">
+    <value>Osnovna grupa artikala</value>
+  </data>
+  <data name="Admin Article Group Picture" xml:space="preserve">
+    <value>Slika grupe artikala</value>
+  </data>
+  <data name="Admin Article Group Select A Group" xml:space="preserve">
+    <value>Odaberi grupu</value>
+  </data>
+  <data name="Admin Article Group Select Parent Group" xml:space="preserve">
+    <value>Odabir osnovne grupe artikala</value>
+  </data>
+  <data name="Admin Article Group Sub-Groups" xml:space="preserve">
+    <value>Podgrupa </value>
+  </data>
+  <data name="Admin Article Group Unassign" xml:space="preserve">
+    <value>Ukloni iz grupe</value>
+  </data>
+  <data name="Admin Article Groups" xml:space="preserve">
+    <value>Grupe artikala</value>
+  </data>
+  <data name="Admin Article Groups Assignment Editor" xml:space="preserve">
+    <value>Dodeljivanje grupe artiklu</value>
+  </data>
+  <data name="Admin Article ID" xml:space="preserve">
+    <value>Šifra artikla</value>
+  </data>
+  <data name="Admin Article Name" xml:space="preserve">
+    <value>Naziv artikla</value>
+  </data>
+  <data name="Admin Article Picture" xml:space="preserve">
+    <value>Slika artikla</value>
+  </data>
+  <data name="Admin Article Price" xml:space="preserve">
+    <value>Cena</value>
+  </data>
+  <data name="Admin Articles" xml:space="preserve">
+    <value>Artikli</value>
+  </data>
+  <data name="Admin Back" xml:space="preserve">
+    <value>Nazad</value>
+  </data>
+  <data name="Admin Cancel Order" xml:space="preserve">
+    <value>Otkaži</value>
+  </data>
+  <data name="Admin Edit" xml:space="preserve">
+    <value>Ažuriraj</value>
+  </data>
+  <data name="Admin Log Out" xml:space="preserve">
+    <value>Odjava</value>
+  </data>
+  <data name="Admin No Article Groups" xml:space="preserve">
+    <value>Nema grupa artikala</value>
+  </data>
+  <data name="Admin Orders" xml:space="preserve">
+    <value>Porudžbine</value>
+  </data>
+  <data name="Admin Panel" xml:space="preserve">
+    <value>Admin deo</value>
+  </data>
+  <data name="Admin Save" xml:space="preserve">
+    <value>Sačuvaj</value>
+  </data>
+  <data name="Admin Ship Order" xml:space="preserve">
+    <value>Pošalji</value>
+  </data>
+  <data name="Apply Filters" xml:space="preserve">
+    <value>Primeni filtere</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>Fragment</value>
+  </data>
+  <data name="Articles" xml:space="preserve">
+    <value>Artikli</value>
+  </data>
+  <data name="Basic Details" xml:space="preserve">
+    <value>Osnovne informacije</value>
+  </data>
+  <data name="CallUs" xml:space="preserve">
+    <value>Telefon</value>
+  </data>
+  <data name="Canceled by the user" xml:space="preserve">
+    <value>Korisnik je otkazao porudžbinu</value>
+  </data>
+  <data name="Cart" xml:space="preserve">
+    <value>Korpa</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>Grupa i podgrupe</value>
+  </data>
+  <data name="Check out now" xml:space="preserve">
+    <value>Završi kupovinu</value>
+  </data>
+  <data name="CheckOurAssortment" xml:space="preserve">
+    <value>Pregled asortimana</value>
+  </data>
+  <data name="Checkout" xml:space="preserve">
+    <value>Završi kupovinu</value>
+  </data>
+  <data name="City:" xml:space="preserve">
+    <value>Grad:</value>
+  </data>
+  <data name="Clear Filters" xml:space="preserve">
+    <value>Ukloni filtere</value>
+  </data>
+  <data name="Clothes Shop - ADMIN" xml:space="preserve">
+    <value>Fragment - ADMIN</value>
+  </data>
+  <data name="Complete Order" xml:space="preserve">
+    <value>Završi poručivanje</value>
+  </data>
+  <data name="CONTACT" xml:space="preserve">
+    <value>Kontakt</value>
+  </data>
+  <data name="ContactUs" xml:space="preserve">
+    <value>Kontaktirajte nas</value>
+  </data>
+  <data name="Continue shopping" xml:space="preserve">
+    <value>Povratak na početnu</value>
+  </data>
+  <data name="Country:" xml:space="preserve">
+    <value>Država:</value>
+  </data>
+  <data name="Default 6" xml:space="preserve">
+    <value>Podrazumevano (6)</value>
+  </data>
+  <data name="Email:" xml:space="preserve">
+    <value>Email:</value>
+  </data>
+  <data name="EmailUs" xml:space="preserve">
+    <value>E-pošta</value>
+  </data>
+  <data name="Friday" xml:space="preserve">
+    <value>Petak</value>
+  </data>
+  <data name="Get Started" xml:space="preserve">
+    <value>Registracija/Prijava</value>
+  </data>
+  <data name="Gift Wrap" xml:space="preserve">
+    <value>Ukrasno pakovanje</value>
+  </data>
+  <data name="Gift wrap these items" xml:space="preserve">
+    <value>Ukrasno pakovanje</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Početna</value>
+  </data>
+  <data name="Invalid username or password" xml:space="preserve">
+    <value>Neispravno korisničko ime ili lozinka</value>
+  </data>
+  <data name="Item" xml:space="preserve">
+    <value>Artikal</value>
+  </data>
+  <data name="Items Per Page" xml:space="preserve">
+    <value>Broj artikala po strani</value>
+  </data>
+  <data name="Lets Start!" xml:space="preserve">
+    <value>Prijava</value>
+  </data>
+  <data name="Loading..." xml:space="preserve">
+    <value>Učitavanje...</value>
+  </data>
+  <data name="Log In" xml:space="preserve">
+    <value>Prijava</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Odjava</value>
+  </data>
+  <data name="Max" xml:space="preserve">
+    <value>Max</value>
+  </data>
+  <data name="Min" xml:space="preserve">
+    <value>Min</value>
+  </data>
+  <data name="Monday" xml:space="preserve">
+    <value>Ponedeljak</value>
+  </data>
+  <data name="My Orders" xml:space="preserve">
+    <value>Moje porudžbine</value>
+  </data>
+  <data name="Name:" xml:space="preserve">
+    <value>Ime i prezime:</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Naredna</value>
+  </data>
+  <data name="No Articles" xml:space="preserve">
+    <value>Nema artikala</value>
+  </data>
+  <data name="No Gift Wrap" xml:space="preserve">
+    <value>Bez ukrasnog pakovanja</value>
+  </data>
+  <data name="Offers" xml:space="preserve">
+    <value>Ponuda</value>
+  </data>
+  <data name="OpenHours" xml:space="preserve">
+    <value>Radno vreme</value>
+  </data>
+  <data name="Options" xml:space="preserve">
+    <value>Dodatne opcije:</value>
+  </data>
+  <data name="Order Note" xml:space="preserve">
+    <value>Napomena</value>
+  </data>
+  <data name="Order Note Empty" xml:space="preserve">
+    <value>/</value>
+  </data>
+  <data name="Order Short Thanks!" xml:space="preserve">
+    <value>Uspešno poručeno!</value>
+  </data>
+  <data name="Order Status" xml:space="preserve">
+    <value>Status porudžbine</value>
+  </data>
+  <data name="Order Thanks With Id Template" xml:space="preserve">
+    <value>Hvala na porudžbini! Vaša porudžbina br. '{0}' će uskoro biti obrađena!</value>
+  </data>
+  <data name="Order Total" xml:space="preserve">
+    <value>Ukupno</value>
+  </data>
+  <data name="Orders" xml:space="preserve">
+    <value>Porudžbine</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Lozinka</value>
+  </data>
+  <data name="Pending Orders" xml:space="preserve">
+    <value>Porudžbine na čekanju</value>
+  </data>
+  <data name="Please enter your details, and we'll ship your goods right away!" xml:space="preserve">
+    <value>Unesite svoje podatke za slanje porudžbine</value>
+  </data>
+  <data name="Portfolio" xml:space="preserve">
+    <value>Ponuda</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>Prethodna</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Cena</value>
+  </data>
+  <data name="Price Filter" xml:space="preserve">
+    <value>Filtriraj po ceni:</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Nalog</value>
+  </data>
+  <data name="Profile Address" xml:space="preserve">
+    <value>Adresa</value>
+  </data>
+  <data name="Profile City" xml:space="preserve">
+    <value>Grad</value>
+  </data>
+  <data name="Profile Country" xml:space="preserve">
+    <value>Država</value>
+  </data>
+  <data name="Profile Name" xml:space="preserve">
+    <value>Ime i prezime</value>
+  </data>
+  <data name="Profile State" xml:space="preserve">
+    <value>Region</value>
+  </data>
+  <data name="Profile Zip Code" xml:space="preserve">
+    <value>Poštanski broj</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Količina</value>
+  </data>
+  <data name="Refresh Data" xml:space="preserve">
+    <value>Osveži pregled</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Registracija</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>Ukloni</value>
+  </data>
+  <data name="Return to Store" xml:space="preserve">
+    <value>Povratak na početnu stranu</value>
+  </data>
+  <data name="Sent Orders" xml:space="preserve">
+    <value>Poslate porudžbine</value>
+  </data>
+  <data name="Ship to" xml:space="preserve">
+    <value>Isporučiti za</value>
+  </data>
+  <data name="Shipped Orders" xml:space="preserve">
+    <value>Poslate porudžbine</value>
+  </data>
+  <data name="Sort Asc Desc" xml:space="preserve">
+    <value>Sortiranje po ceni</value>
+  </data>
+  <data name="State or Region:" xml:space="preserve">
+    <value>Region:</value>
+  </data>
+  <data name="Subtotal" xml:space="preserve">
+    <value>Iznos</value>
+  </data>
+  <data name="To do this operation, you must be logged in!" xml:space="preserve">
+    <value>Morate biti prijavljeni da biste završili porudžbinu!</value>
+  </data>
+  <data name="Total:" xml:space="preserve">
+    <value>Ukupno:</value>
+  </data>
+  <data name="Update Profile" xml:space="preserve">
+    <value>Ažuriraj</value>
+  </data>
+  <data name="User Profile" xml:space="preserve">
+    <value>Korisnički profil</value>
+  </data>
+  <data name="User Profile Edit" xml:space="preserve">
+    <value>Izmena profila</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Korisničko ime</value>
+  </data>
+  <data name="We'll ship your goods as soon as possible." xml:space="preserve">
+    <value>Šaljemo porudžbinu što pre :)</value>
+  </data>
+  <data name="Welcome Screen Large Text" xml:space="preserve">
+    <value>Dobrodošli u naš svet!</value>
+  </data>
+  <data name="Welcome Screen Small Text" xml:space="preserve">
+    <value>Pažljivo odabrana garderoba za svačiji ukus i džep</value>
+  </data>
+  <data name="Your cart" xml:space="preserve">
+    <value>Vaša korpa</value>
+  </data>
+  <data name="Zip:" xml:space="preserve">
+    <value>Poštanski broj:</value>
+  </data>
+</root>

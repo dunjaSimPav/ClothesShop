@@ -1,10 +1,13 @@
-﻿using ClothesShop.Models;
+﻿using ClothesShop.Enums;
+using ClothesShop.Models;
+using Stripe;
 using System.Threading.Tasks;
 
 namespace ClothesShop.Services
 {
     public interface IPaymentService
     {
-        Task<string> ProcessPayment(Order order, string successUrl, string cancelUrl);
+        Task<PaymentIntent> GetPaymentIntent(string sessionId);
+        Task<(PaymentStatus status, string redirectUrl)> ProcessPayment(Order order, string successUrl, string cancelUrl, string failureUrl);
     }
 }

@@ -1,0 +1,70 @@
+﻿@page "/admin/ArticleGroups/details/{id:long}"
+
+@using ClothesShop.Models
+@using ClothesShop.Services
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
+@using ClothesShop.Infrastructure
+
+@inject Localizer L
+
+<h3 class="bg-info text-white text-center p-1">@L["Admin Article Group Details"]</h3>
+
+<table class="table table-sm table-bordered table-striped">
+    <tbody>
+        @if (ArticleGroup != null)
+        {
+            <tr><th>@L["Admin Article Group ID"]</th><td>@ArticleGroup.ArticleGroupId</td></tr>
+            <tr><th>@L["Admin Article Group Name"]</th><td>@ArticleGroup.Name</td></tr>
+            <tr><th>@L["Admin Article Group Description"]</th><td>@ArticleGroup.Description</td></tr>
+            <tr><th>@L["Admin Article Group Parent Group"]</th><td>@ArticleGroup.ParentArticleGroup?.Name</td></tr>
+        }
+    </tbody>
+</table>
+
+@if (ArticleGroup?.ArticleGroups?.Any() == true)
+{
+    <h3 class="bg-info text-white text-center p-1">@L["Admin Article Group Sub-Groups"]</h3>
+
+    <table class="table table-sm table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>@L["Admin Article Group ID"]</th>
+                <th>@L["Admin Article Group Name"]</th>
+                <th>@L["Admin Article Group Description"]</th>
+            </tr>
+        </thead>
+        <tbody>
+                @foreach (var group in ArticleGroup.ArticleGroups)
+                {
+                    <tr>
+                        <td>@group.ArticleGroupId</td>
+                        <td>@group.Name</td>
+                        <td>@group.Description</td>
+                    </tr>
+                }
+        </tbody>
+    </table>
+}
+
+@if (ArticleGroup != null)
+{
+    <NavLink class="btn btn-warning" href="@UrlTypeEnum.Edit.GetAdminUrl("ArticleGroups", ArticleGroup?.ArticleGroupId)">@L["Admin Edit"]</NavLink>
+}
+<NavLink class="btn btn-secondary" href="@UrlTypeEnum.List.GetAdminUrl("ArticleGroups")">@L["Admin Back"]</NavLink>
+
+@code {
+
+    [Inject]
+    public ClothesShop.Repository.IArticleGroupRepository Repository { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+
+    public ArticleGroup? ArticleGroup { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ArticleGroup = await Repository.GetArticleGroupById(Id);
+    }
+}

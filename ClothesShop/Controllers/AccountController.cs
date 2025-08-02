@@ -8,6 +8,7 @@ using ClothesShop.Repository;
 using System.Security.Claims;
 using System.Linq;
 using System.Text.RegularExpressions;
+using ClothesShop.Services;
 
 namespace ClothesShop.Controllers
 {
@@ -17,13 +18,17 @@ namespace ClothesShop.Controllers
         private SignInManager<IdentityUser> signInManager;
         private IUserProfileRepository profileRepository;
 
+        private readonly Localizer L;
+
         public AccountController(UserManager<IdentityUser> userMgr,
-            SignInManager<IdentityUser> signInMgr, IUserProfileRepository userRepo)
+            SignInManager<IdentityUser> signInMgr, IUserProfileRepository userRepo,
+            Localizer l)
 
         {
             userManager = userMgr;
             signInManager = signInMgr;
             profileRepository = userRepo;
+            L = l;
         }
 
         public ViewResult Login(string returnUrl)
@@ -52,7 +57,7 @@ namespace ClothesShop.Controllers
                 }
             }
 
-            ModelState.AddModelError("", "Invalid username or password");
+            ModelState.AddModelError("", L["Invalid username or password"]);
             return View(loginViewModel);
         }
 
@@ -75,7 +80,7 @@ namespace ClothesShop.Controllers
                 if (user != null)
                 {
 
-                    ModelState.AddModelError("", $"User with {registerViewModel.Name} already exists!");
+                    ModelState.AddModelError("", string.Format(L["User with {0} name already exists!"], registerViewModel.Name));
                     return View(registerViewModel);
                 }
 
@@ -109,7 +114,7 @@ namespace ClothesShop.Controllers
                 }
             }
 
-            ModelState.AddModelError("", "Invalid username or password");
+            ModelState.AddModelError("", L["Invalid username or password"]);
             return View(registerViewModel);
         }
 
@@ -128,7 +133,7 @@ namespace ClothesShop.Controllers
 
             if (string.IsNullOrEmpty(email))
             {
-                ModelState.AddModelError("", "Sorry, you must be logged in!");
+                ModelState.AddModelError("", L["Sorry, you must be logged in!"]);
                 Response.Redirect("/Account/Login");
                 return View();
             }
@@ -137,7 +142,7 @@ namespace ClothesShop.Controllers
 
             if (user == null)
             {
-                ModelState.AddModelError("", "Sorry, you must be logged in!");
+                ModelState.AddModelError("", L["Sorry, you must be logged in!"]);
                 return View();
             }
 
@@ -161,11 +166,11 @@ namespace ClothesShop.Controllers
 
                 if(userProfile == null)
                 {
-                    ModelState.AddModelError("", "Invalid user profile");
+                    ModelState.AddModelError("", L["Invalid user profile"]);
                     return View(profile);
                 }
 
-                //userProfile.Name = profile.Name;
+                userProfile.Name = profile.Name;
                 userProfile.Address = profile.Address;
                 userProfile.City = profile.City;
                 userProfile.Country = profile.Country;
@@ -177,7 +182,7 @@ namespace ClothesShop.Controllers
                 return View(userProfile);
             }
 
-            ModelState.AddModelError("", "Invalid user profile");
+            ModelState.AddModelError("", L["Invalid user profile"]);
             return View(profile);
         }
 

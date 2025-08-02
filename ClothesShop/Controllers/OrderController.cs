@@ -14,23 +14,29 @@ using System.IO;
 using Stripe;
 using Microsoft.Extensions.Configuration;
 using Stripe.Checkout;
+using System;
+using ClothesShop.Enums;
+using System.Diagnostics;
 
 namespace ClothesShop.Controllers
 {
+    [Route("[controller]")]
     public class OrderController : Controller
     {
         private IOrderRepository _repository;
         private readonly IUserProfileRepository _userProfileRepository;
         private Cart _cart;
 
+        private readonly Localizer L;
+
         private UserManager<IdentityUser> _userManager;
         private readonly IPaymentService _paymentService;
         private readonly ISessionManager _sessionManager;
-        private readonly IEmailService _emailService;
         private readonly IConfiguration _configuration;
 
         public OrderController(UserManager<IdentityUser> userMgr, IOrderRepository repoService, IUserProfileRepository userProfileRepository, Cart cartService,
-            IPaymentService paymentService, ISessionManager sessionManager, IEmailService emailService, IConfiguration configuration)
+            IPaymentService paymentService, ISessionManager sessionManager, IConfiguration configuration,
+            Localizer l)
         {
             _userManager = userMgr;
             _repository = repoService;
@@ -38,9 +44,17 @@ namespace ClothesShop.Controllers
             _cart = cartService;
             _paymentService = paymentService;
             _sessionManager = sessionManager;
-            _emailService = emailService;
             _configuration = configuration;
+            L = l;
         }
+
+        private const string PaymentSucceededEvent = "payment_intent.succeeded";
+        private const string PaymentCanceledEvent = "payment_intent.canceled";
+        private const string PaymentFailedEvent = "payment_intent.payment_failed";
+
+        public const string PaymentFailedStatus = "requires_payment_method";
+        private const string PaymentCanceledStatus = "canceled";
+        private const string PaymentSucceededStatus = "succeeded";
 
         [HttpPost]
         [Route("webhook")]
@@ -52,24 +66,76 @@ namespace ClothesShop.Controllers
                 Request.Headers["Stripe-Signature"],
                 _configuration["Stripe:WebhookSecretKey"]);
 
-            if (stripeEvent.Type == "checkout.session.completed")
+            string[] validPaymentTypes = [
+                PaymentSucceededEvent, PaymentFailedEvent, PaymentCanceledEvent
+            ];
+
+            string[] validPaymentStatuses = [
+                PaymentFailedStatus,
+                PaymentSucceededStatus,
+                PaymentCanceledStatus
+            ];
+
+            string paymentStatus = validPaymentTypes.FirstOrDefault(x => x.Equals(stripeEvent.Type, StringComparison.OrdinalIgnoreCase));
+
+            if (string.IsNullOrEmpty(paymentStatus))
             {
-                var session = stripeEvent.Data.Object as Session;
-                // TODO: Process further...
+                return BadRequest();
             }
 
-            return Ok();
+            var session = stripeEvent.Data.Object as PaymentIntent;
+
+            if (!validPaymentStatuses.Any(x => x.Equals(session.Status, StringComparison.OrdinalIgnoreCase)))
+            {
+                return BadRequest();
+            }
+
+            if (!session.Metadata.TryGetValue("orderId", out string orderIdStr)
+                || !int.TryParse(orderIdStr, out int orderId)
+                || orderId < 1)
+            {
+                return BadRequest();
+            }
+
+
+            var orderFromDb = await _repository.GetOrderById(orderId);
+            if (orderFromDb == null)
+            {
+                return BadRequest();
+            }
+
+            Func<string, PaymentStatus> getPaymentStatusFromString = (string status) => status.ToLower() switch
+            {
+                PaymentCanceledStatus => PaymentStatus.Cancelled,
+                PaymentSucceededStatus => PaymentStatus.Paid,
+                PaymentFailedStatus => PaymentStatus.Failed,
+                _ => PaymentStatus.Pending
+            };
+
+            PaymentStatus orderStatus = getPaymentStatusFromString(session.Status);
+
+            if (orderStatus == PaymentStatus.Pending)
+            {
+                // Nema potrebe za prevodjenjem, debug poruka za Stripe servis
+                Debug.WriteLine($"Primljen je nepoznat status porudzbine, naplata nije uspela. Koristi se status: {orderStatus}");
+            }
+
+            orderFromDb.Status = orderStatus;
+            _repository.UpdateOrder(orderFromDb);
+
+            return Ok(orderFromDb);
         }
+
 
         [HttpGet]
         [Route("order/edit/{orderId:int}")]
-        public IActionResult EditOrder(int orderId)
+        public async Task<IActionResult> EditOrder(int orderId)
         {
             var user = GetCurrentUser();
 
             if (user == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -77,15 +143,15 @@ namespace ClothesShop.Controllers
 
             if (userProfile == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
-            var order = _repository.Orders.Where(x => x.OrderId == orderId && x.Shipped == false).FirstOrDefault();
+            var order = await _repository.GetOrderById(orderId);
 
-            if (order == null)
+            if (order == null || order.Status != PaymentStatus.Pending)
             {
-                _sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(MessageConstants.ValidOrderWithSubmittedIdDoesNotExist, orderId));
+                _sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(L[MessageConstants.ValidOrderWithSubmittedIdDoesNotExist], orderId));
                 return RedirectToAction("OrdersByUser", "Home");
             }
 
@@ -94,13 +160,13 @@ namespace ClothesShop.Controllers
 
         [HttpPost]
         [Route("order/edit")]
-        public IActionResult EditOrderPost([FromForm] Order updatedOrder)
+        public async Task<IActionResult> EditOrderPost([FromForm] Order updatedOrder)
         {
             var user = GetCurrentUser();
 
             if (user == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -108,34 +174,31 @@ namespace ClothesShop.Controllers
 
             if (userProfile == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
-            var order = _repository.Orders.Where(x => x.OrderId == updatedOrder.OrderId && x.Shipped == false).FirstOrDefault();
+            var order = await _repository.GetOrderById(updatedOrder.OrderId);
 
-            if (order == null)
+            if (order == null || order.Status != PaymentStatus.Pending)
             {
-                _sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(MessageConstants.ValidOrderWithSubmittedIdDoesNotExist, updatedOrder.OrderId));
+                _sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(L[MessageConstants.ValidOrderWithSubmittedIdDoesNotExist], updatedOrder.OrderId));
                 return RedirectToAction("OrdersByUser", "Order");
             }
 
             updatedOrder = _repository.UpdateOrder(updatedOrder);
 
-            var content = EmailHelper.PrepareOrderEmail(updatedOrder, true);
-
-            _emailService.SendEmail(updatedOrder.Email, $"Updated Order - {updatedOrder.Name} - {updatedOrder.Email}!", content);
-
             return RedirectToAction("OrdersByUser", "Order");
         }
 
+        [HttpGet("Checkout")]
         public IActionResult Checkout()
         {
             var user = GetCurrentUser();
 
             if (user == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -143,7 +206,7 @@ namespace ClothesShop.Controllers
 
             if (userProfile == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -154,14 +217,44 @@ namespace ClothesShop.Controllers
             return View(model);
         }
 
-        [HttpPost] // TODO: Finalize this
+        [HttpGet("pay/{orderId:int}")]
+        public async Task<IActionResult> ProcessOrderGet(int orderId)
+        {
+            var user = GetCurrentUser();
+
+            if (user == null)
+            {
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
+                return RedirectToAction("", "Home");
+            }
+
+            string failureUrl = Url.Action("StripeUnavailable", "Order");
+
+            try
+            {
+                var order = await _repository.GetOrderById(orderId);
+
+                (PaymentStatus status, string redirectUrl) = await _paymentService.ProcessPayment(order,
+                    successUrl: Url.Action("OrderCompletedWithQueryParam", "Order", new { orderId = order.OrderId }, Request.Scheme),
+                    cancelUrl: Url.Action("Cancelled", "Order", new { orderId = order.OrderId }, Request.Scheme),
+                    failureUrl: failureUrl);
+
+                return Redirect(redirectUrl);
+            }
+            catch (Exception ex)
+            {
+                return Redirect(failureUrl);
+            }
+        }
+
+        [HttpPost("ProcessOrder")]
         public async Task<IActionResult> ProcessOrder(Order order)
         {
             var user = GetCurrentUser();
 
             if (user == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -169,7 +262,7 @@ namespace ClothesShop.Controllers
 
             if (userProfile == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -183,47 +276,47 @@ namespace ClothesShop.Controllers
                 return RedirectToAction("Checkout", "Order");
             }
 
-            order.Lines = _cart.Lines.Select(x => new CartLine() { Quantity = x.Quantity, Article = x.Article }).ToList();
+            string failureUrl = Url.Action("StripeUnavailable", "Order");
+            try
+            {
+                order.Lines = _cart.Lines.Select(x => new OrderLine() { 
+                    Quantity = x.Quantity, 
+                    ArticleId = x.ArticleId, 
+                    Price = x.Price, 
+                }).ToList();
 
-            order.UserProfileId = userProfile.Id;
+                order.UserProfileId = userProfile.Id;
 
-            var savedOrder = _repository.SaveOrder(order);
-            _cart.Clear();
+                var savedOrder = _repository.SaveOrder(order);
+                _cart.Clear();
 
-            var redirectUrl = await _paymentService.ProcessPayment(savedOrder,
-                successUrl: Url.Action("Completed", "Order", savedOrder.OrderId, Request.Scheme),
-                cancelUrl: Url.Action("Cancelled", "Order", savedOrder.OrderId, Request.Scheme));
-
-
-            return Redirect(redirectUrl);
-
-            //order = _repository.Orders
-            //    .Include(x => x.Lines)
-            //        .ThenInclude(x => x.Article)
-            //            .ThenInclude(x => x.ArticleType)
-            //    .AsNoTracking()
-            //    .FirstOrDefault(x => x.OrderId == savedOrder.OrderId);
-
-            //var content = EmailHelper.PrepareOrderEmail(order);
-
-            //_emailService.SendEmail(order.Email, $"New Order - {order.Name} - {order.Email}!", content);
-            //return RedirectToAction("Completed", "Order", new { orderId = order.OrderId });
+                (PaymentStatus status, string redirectUrl) = await _paymentService.ProcessPayment(savedOrder,
+                    successUrl: Url.Action("OrderCompletedWithQueryParam", "Order", new { orderId = savedOrder.OrderId }, Request.Scheme),
+                    cancelUrl: Url.Action("Cancelled", "Order", new { orderId = savedOrder.OrderId }, Request.Scheme),
+                    failureUrl: failureUrl);
+                
+                return Redirect(redirectUrl);
+            }
+            catch (Exception ex)
+            {
+                return Redirect(failureUrl);
+            }
         }
 
-        [HttpGet]
-        public IActionResult Cancelled(int orderId)
+        [HttpGet("StripeUnavailable")]
+        public IActionResult StripeUnavailable()
         {
-            return RedirectToPage("/Cart");
+            return View("StripeUnavailable");
         }
 
-        [HttpPost]
-        public IActionResult Checkout(Order order)
+        [HttpGet("Cancelled")]
+        public async Task<IActionResult> Cancelled([FromQuery] int orderId)
         {
             var user = GetCurrentUser();
 
             if (user == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -231,48 +324,89 @@ namespace ClothesShop.Controllers
 
             if (userProfile == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
+                return RedirectToAction("", "Home");
+            }
+
+            var order = await _repository.GetOrderById(orderId);
+
+            if (order == null || order.Status != PaymentStatus.Pending)
+            {
+                _sessionManager.SetByKey("ValidOrderDoesNotExist", string.Format(L[MessageConstants.ValidOrderWithSubmittedIdDoesNotExist], orderId));
+                return RedirectToAction("OrdersByUser", "Order");
+            }
+
+            order.Status = PaymentStatus.Cancelled;
+            _repository.UpdateOrder(order);
+
+            return View(order.OrderId);
+        }
+
+        [HttpPost("Checkout")]
+        public async Task<IActionResult> Checkout(Order order)
+        {
+            var user = GetCurrentUser();
+
+            if (user == null)
+            {
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
+                return RedirectToAction("", "Home");
+            }
+
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+
+            if (userProfile == null)
+            {
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
             if (_cart.Lines.Count() == 0)
             {
-                ModelState.AddModelError("", "Sorry, your cart is empty!");
+                ModelState.AddModelError("", L["Sorry, your cart is empty!"]);
             }
 
             if (ModelState.IsValid)
             {
-                order.Lines = _cart.Lines;
+                order.Lines = _cart.Lines.Select(x => new OrderLine()
+                {
+                    Quantity = x.Quantity,
+                    ArticleId = x.ArticleId,
+                    Price = x.Price,
+                }).ToList();
 
                 order.UserProfileId = userProfile.Id;
 
                 var savedOrder = _repository.SaveOrder(order);
                 _cart.Clear();
                 
-                order = _repository.Orders
-                    .Include(x => x.Lines)
-                        .ThenInclude(x => x.Article)
-                            .ThenInclude(x => x.ArticleType)
-                    .AsNoTracking()
-                    .FirstOrDefault(x => x.OrderId == savedOrder.OrderId);
-
-                var content = EmailHelper.PrepareOrderEmail(order);
-
-                _emailService.SendEmail(order.Email, $"New Order - {order.Name} - {order.Email}!", content);
-                return RedirectToAction("Completed", "Order", new { orderId = order.OrderId});
+                order = await _repository.GetOrderById(order.OrderId);
+                
+                return RedirectToAction("Completed", "Order", new { orderId = order.OrderId });
             }
             else
                 return View();
         }
 
-        [HttpGet]
-        public IActionResult Completed(int orderId)
+        [HttpGet("Completed/{orderId:int}")]
+        public IActionResult OrderCompleted(int orderId)
+        {
+            return OrderCompletedProcessor(orderId);
+        }
+
+        [HttpGet("Completed")]
+        public IActionResult OrderCompletedWithQueryParam([FromQuery] int orderId)
+        {
+            return OrderCompletedProcessor(orderId);
+        }
+
+        private IActionResult OrderCompletedProcessor(int orderId)
         {
             var user = GetCurrentUser();
 
             if (user == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -280,7 +414,7 @@ namespace ClothesShop.Controllers
 
             if (userProfile == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToAction("", "Home");
             }
 
@@ -293,13 +427,13 @@ namespace ClothesShop.Controllers
         }
 
         [HttpGet("order/ordersByUser")]
-        public IActionResult OrdersByUser()
+        public async Task<IActionResult> OrdersByUser()
         {
             var user = GetCurrentUser();
             
             if (user == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToPage("/");
             }
 
@@ -307,34 +441,56 @@ namespace ClothesShop.Controllers
 
             if (userProfile == null)
             {
-                _sessionManager.SetByKey("MustBeLoggedIn", MessageConstants.ToDoThisOperationYouMustBeLoggedIn);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
                 return RedirectToPage("/");
             }
 
-            var orders = _repository.Orders.Where(x => x.UserProfileId == userProfile.Id);
+            var orders = await _repository.GetOrdersByUser(userProfile.Id);
             var viewModel = new OrdersByUserViewModel();
             viewModel.Orders = orders.Where(x => x.Shipped == false).ToList();
             viewModel.ShippedOrders = orders.Where(x => x.Shipped == true).ToList();
             return View(viewModel);
         }
 
-        [HttpPost]
-        [Authorize]
-        public IActionResult Cancel([FromForm] int OrderId)
+        [HttpPost("Cancel")]
+        [Authorize(Roles = "User, Administrator")]
+        public async Task<IActionResult> CancelOrder([FromForm] int OrderId)
         {
-            var order = _repository.Orders.Where(x => x.OrderId == OrderId).FirstOrDefault();
+            var user = GetCurrentUser();
 
-            if(order != null)
+            if (user == null)
             {
-                order.Canceled = true;
-                order.Note = "Cancelled by the user";
-                _repository.SaveOrder(order);
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
+                return RedirectToPage("/");
+            }
+
+            var userProfile = _userProfileRepository.UserProfiles.FirstOrDefault(p => p.AccountId == user.Id);
+
+            if (userProfile == null)
+            {
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
+                return RedirectToPage("/");
+            }
+
+            var order = await _repository.GetOrderById(OrderId);
+
+            if (userProfile.Id != order.UserProfileId && !HttpContext.User.IsInRole("Administrator"))
+            {
+                _sessionManager.SetByKey("MustBeLoggedIn", L[MessageConstants.ToDoThisOperationYouMustBeLoggedIn]);
+                return RedirectToPage("/");
+            }
+
+            if (order != null)
+            {
+                order.Status = PaymentStatus.Cancelled;
+                order.Note = L["Canceled by the user"];
+                _repository.UpdateOrder(order);
             }
 
             return RedirectToAction("OrdersByUser", "Order");
         }
 
-        [HttpPost]
+        [HttpPost("ReturnToCart")]
         [Authorize]
         public IActionResult ReturnToCart([FromForm] int OrderId)
         {

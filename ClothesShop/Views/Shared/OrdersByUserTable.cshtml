@@ -4,106 +4,86 @@
     bool canCancel = !Model.Any(x => x.Shipped);
 }
 
+@inject Localizer L
+
 <table class="table">
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.Name)
+                @L["Basic Details"]
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Email)
+            <th colspan="3">
+                @L["Articles"]
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Line1)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.City)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.State)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Zip)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Country)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.GiftWrap)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Shipped)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Canceled)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Note)
-            </th>
-            @if(canCancel)
-            {
-                <th></th>
-            }
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Email)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Line1)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.City)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.State)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Zip)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Country)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.GiftWrap)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Shipped)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Canceled)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Note)
-            </td>
-                @if(canCancel)
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @($"#{item.OrderId}")<br />
+                    @($"{item.Name} ({item.Email})")<br />
+                    @($"{item.Address}, {item.City} ({item.Zip}), {item.Country}")<br />
+                    @(item.GiftWrap ? L["Gift Wrap"] : L["No Gift Wrap"])<br />
+                    @($"{L["Order Status"]}: {item.Status.Translate()}")<br />
+                    @($"{L["Order Note"]}: " + (string.IsNullOrEmpty(item.Note) ? L["Order Note Empty"] : item.Note))
+                </td>
+                <td>
+
+                    <table class="table">
+                        <tbody>
+                            @foreach (var line in item.Lines)
+                            {
+                                <tr>
+                                    <td>@line.Article?.Name</td>
+                                    <td>@("x" + line.Quantity)</td>
+                                    <td>@(Math.Round(line.Quantity * line.Price, 2).ToString("#,###.00") + " RSD")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr style="border-color: transparent">
+                                <td>
+                                    @L["Order Total"]
+                                </td>
+                                <td>
+                                </td>
+                                <td>
+                                    @(Math.Round(item.Lines.Sum(x => (x.Quantity * x.Price)), 2).ToString("#,###.00") + " RSD")
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </td>
+                <td>
+                </td>
+                @if (canCancel)
                 {
                     <td class="lower-padding">
                         <div class="d-flex">
-                            @if(!item.Canceled)
+                            @if (item.Status == ClothesShop.Enums.PaymentStatus.Pending)
                             {
-                                <form method="post" asp-action="Cancel" asp-controller="Order" class="p-2">
+                                <form asp-action="Cancel" asp-controller="Order" method="post">
                                     <input type="hidden" name="OrderId" value="@item.OrderId" />
-                                    <a href="#" type="submit"><i class="fa fa-trash"></i></a>
+                                    <button type="submit" class="btn btn-link">
+                                        <i class="fa fa-plus rotate-45"></i>
+                                    </button>
                                 </form>
+                            }
 
-                                <a href="/Order/Edit/@item.OrderId" class="p-2"><i class="fa fa-pen"></i></a>
-                            
-                                <form method="post" asp-action="ReturnToCart" asp-controller="Order" class="p-2">
-                                    <input type="hidden" name="OrderId" value="@item.OrderId" />
-                                    <a href="#" type="submit"><i class="fa fa-shopping-cart"></i></a>
-                                </form>
+                            @if (item.Status == ClothesShop.Enums.PaymentStatus.Failed || item.Status == ClothesShop.Enums.PaymentStatus.Pending)
+                            {
+                                <div>
+                                    <a asp-controller="Order" asp-action="ProcessOrderGet" asp-route-orderId="@item.OrderId" class="btn btn-link">
+                                        <i class="fa fa-coins"></i>
+                                    </a>
+                                </div>
                             }
                         </div>
                     </td>
                 }
             </tr>
-}
+        }
     </tbody>
 </table>

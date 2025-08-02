@@ -1,0 +1,15 @@
+﻿@inject Localizer L
+
+<section class="hero">
+    <div class="container aos-init aos-animate d-flex h-100 justify-content-center align-self-center w-50">
+        <div class="col-md-12 justify-content-center align-self-center text-center">
+            <h2>@L["Oops!"]</h2>
+
+            <p>@L["The order was not processed, it is not possible to access the Stripe payment system!"]</p>
+
+            <p>@L["Please try again later."]</p>
+
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">@L["Return to Store"]</a>
+        </div>
+    </div>
+</section>

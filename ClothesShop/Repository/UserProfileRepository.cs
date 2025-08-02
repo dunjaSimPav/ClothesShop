@@ -25,7 +25,5 @@ namespace ClothesShop.Repository
             return _context.Profiles
                 .FirstOrDefault(x => x.Id == userProfile.Id);
         }
-
-    
-}
+    }
 }

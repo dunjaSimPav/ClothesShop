@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using System.Globalization;
 
 namespace ClothesShop
 {
@@ -14,6 +15,8 @@ namespace ClothesShop
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
+                    CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("sr-Latn-RS");
+                    CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("sr-Latn-RS");
                     webBuilder.UseStartup<Startup>();
                 });
     }

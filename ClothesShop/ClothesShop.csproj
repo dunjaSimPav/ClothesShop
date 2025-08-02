@@ -8,10 +8,12 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4" />
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.2" />
-    <PackageReference Include="Stripe.net" Version="47.4.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+    <PackageReference Include="Stripe.net" Version="48.3.0" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="keys\" />
+    <Folder Include="Migrations\Database\" />
     <Folder Include="Migrations\Identity\" />
   </ItemGroup>
 </Project>

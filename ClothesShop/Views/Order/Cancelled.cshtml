@@ -1,0 +1,17 @@
+﻿@model int
+
+@inject Localizer L
+
+<section class="hero">
+    <div class="container aos-init aos-animate d-flex h-100 justify-content-center align-self-center w-50">
+        <div class="col-md-12 justify-content-center align-self-center text-center">
+            <h2>@L["Your order was canceled!"]</h2>
+
+            <p>@(string.Format(L["Order Canceled With Id Template"], @Model))</p>
+
+            <p>@L["If you change your mind, you can reactivate it."]</p>
+
+            <a class="btn btn-primary" asp-controller="Home" asp-action="Index">@L["Return to Store"]</a>
+        </div>
+    </div>
+</section>

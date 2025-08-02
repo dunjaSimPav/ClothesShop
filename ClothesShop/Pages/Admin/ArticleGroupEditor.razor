@@ -1,0 +1,172 @@
+﻿@page "/admin/ArticleGroups/edit/{id:long}"
+
+@page "/admin/ArticleGroups/create"
+
+@using ClothesShop.Models
+@using ClothesShop.Services
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.AspNetCore.Http
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Routing
+@using ClothesShop.Infrastructure
+@using ClothesShop.Repository
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Collections.Generic
+@using ClothesShop.Components
+@using System.IO
+@using System.Net.Http
+
+@inject Localizer L
+
+@inherits OwningComponentBase<IArticleGroupRepository>
+@inject IHttpContextAccessor _httpContext
+
+<style>
+    div.validation-message {
+    color: rgb(220, 53, 69);
+    font-weight: 500;
+    }
+</style>
+
+<h3 class="bg-@ThemeColor text-white text-center p-1">@(Id > 0 ? @L["Admin Article Group Edit"] : @L["Admin Article Group Create"])</h3>
+
+@if (ArticleGroup != null)
+{
+    <EditForm Model="ArticleGroup" OnValidSubmit="SaveArticleGroup">
+        <DataAnnotationsValidator />
+
+        @if (ArticleGroup.ArticleGroupId > 0)
+        {
+            <div class="form-group">
+                <label>@L["Admin Article Group ID"]</label>
+                <input class="form-control" disabled value="@ArticleGroup.ArticleGroupId" />
+            </div>
+        }
+
+        <div class="form-group">
+            <label>@L["Admin Article Group Name"]</label>
+            <ValidationMessage For="@(() => ArticleGroup.Name)" />
+            <InputText class="form-control" @bind-Value="ArticleGroup.Name" />
+        </div>
+
+        <div class="form-group">
+            <label>@L["Admin Article Group Description"]</label>
+            <ValidationMessage For="@(() => ArticleGroup.Description)" />
+            <InputTextArea class="form-control" @bind-Value="ArticleGroup.Description" />
+        </div
+
+        <div class="form-group">
+            <label>@L["Admin Article Group Picture"]</label>
+            <ValidationMessage For="@(() => ArticleGroup.Image)" />
+            <img style="max-height: 256px" src="@ArticleGroup.Image" />
+            @* <input type="file" @onchange="UploadImage" class="form-control" /> *@
+            <InputFile id="imgSelector" class="form-control" OnChange="UploadImage" multiple="false" MaxFileSize="104857600" />
+        </div>
+
+        <div class="form-group">
+            <label>@L["Admin Article Group Parent Group"]</label>
+            <ValidationMessage For="@(() => ArticleGroup.ParentArticleGroupId)" />
+            <ExtendedInputSelect class="form-control selectpicker" @bind-Value="ArticleGroup.ParentArticleGroupId">
+                <option value="0">@L["Admin Article Group Select Parent Group"]</option>
+                @if (ParentArticleGroups != null)
+                {
+                    @foreach (var articleGroup in ParentArticleGroups)
+                    {
+                        <option value="@articleGroup.ArticleGroupId">@articleGroup.Name</option>
+                    }
+                }
+            </ExtendedInputSelect>
+        </div>
+
+        <button type="submit" class="btn btn-@ThemeColor" disabled="@(!CanSave)">@L["Admin Save"]</button>
+
+        <NavLink class="btn btn-secondary" href="/admin/ArticleGroups">@L["Admin Back"]</NavLink>
+    </EditForm>
+}
+
+@code {
+
+    [Inject]
+    public ClothesShop.Repository.IArticleGroupRepository Repository { get; set; }
+
+    [Inject]
+    public NavigationManager NavManager { get; set; }
+
+    [Inject]
+    public IWebHostEnvironment WebHostEnvironment { get; set; }
+
+    [Inject]
+    public HttpClient HttpClient { get; set; }
+
+    [Parameter]
+    public long Id { get; set; }
+
+    public bool CanSave { get; set; } = true;
+
+    public ArticleGroup ArticleGroup { get; set; }
+
+    public List<ArticleGroup> ParentArticleGroups { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id > 0)
+            ArticleGroup = await Repository.GetArticleGroupById(Id);
+        else
+            ArticleGroup = new ArticleGroup();
+
+        var parentArticleGroups = await Repository.GetParentArticleGroups();
+        ParentArticleGroups = parentArticleGroups.Where(x => x.ArticleGroupId != ArticleGroup.ArticleGroupId).ToList();
+    }
+
+    public async Task SaveArticleGroup()
+    {
+        if (!CanSave) return;
+
+        if (Id > 0)
+        {
+            await Repository.Delete(ArticleGroup.ArticleGroupId);
+        }
+
+        await Repository.Create(ArticleGroup);
+
+        NavManager.NavigateTo("/admin/ArticleGroups");
+    }
+
+
+    public async Task UploadImage(InputFileChangeEventArgs args)
+    {
+        if (args.File == null) return;
+
+        CanSave = false;
+
+        var content = new MultipartFormDataContent();
+        using var stream = args.File.OpenReadStream(maxAllowedSize: 1_048_576_00); // 1 GB max size)
+        content.Add(new StreamContent(stream), "image", args.File.Name);
+
+        var cookiesDictionary = _httpContext.HttpContext.Request.Cookies;
+
+        var request = new HttpRequestMessage(HttpMethod.Post, $"http://localhost:5000/api/upload/image")
+        {
+            Content = content
+        };
+
+        string cookies = string.Join("; ", cookiesDictionary.Select(c => $"{c.Key}={c.Value}"));
+
+        request.Headers.Add("Cookie", cookies);
+
+        var response = await HttpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            // Handle error
+            return;
+        }
+
+        var filePath = await response.Content.ReadAsStringAsync();
+
+        ArticleGroup.Image = filePath;
+        CanSave = true;
+    }
+
+    public string ThemeColor => Id > 0 ? "warning" : "primary";
+    public string TitleText => Id > 0 ? "Edit" : "Create";
+}

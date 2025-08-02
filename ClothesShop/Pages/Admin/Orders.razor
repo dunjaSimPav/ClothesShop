@@ -8,62 +8,21 @@
 
 @page "/admin/orders"
 
-@inherits OwningComponentBase<IOrderRepository>
+@inject Localizer L
 
-@inject IEmailService emailService
+<div class="row w-100">
+    <div class="col-md-12">
+        <h5 class="font-weight-bold">@L["Pending Orders"]</h5>
+        <OrderTable Shipped="false" TableTitle="@L["Pending Orders"]" />
+    </div>
+</div>
 
-<OrderTable TableTitle="Unshipped Orders"
-            Orders="UnshippedOrders" ButtonLabel="Ship"
-            OrderSelected="ShipOrder" OrderCanceled="CancelOrder" />
-
-<OrderTable TableTitle="Shipped Orders"
-            Orders="ShippedOrders" ButtonLabel="Reset"
-            OrderSelected="ResetOrder" />
-
-<button class="btn btn-info" @onclick="@(() => UpdateData())">Refresh Data</button>
-
+<div class="row w-100">
+    <div class="col-md-12">
+        <h5 class="font-weight-bold">@L["Shipped Orders"]</h5>
+        <OrderTable Shipped="true" TableTitle="@L["Shipped Orders"]" />
+    </div>
+</div>
 
 @code {
-    public IOrderRepository Repository => Service;
-
-    public IEnumerable<Order> AllOrders { get; set; }
-    public IEnumerable<Order> UnshippedOrders { get; set; }
-    public IEnumerable<Order> ShippedOrders { get; set; }
-
-    protected async override Task OnInitializedAsync()
-    {
-        await UpdateData();
-    }
-
-    public async Task UpdateData()
-    {
-        AllOrders = await Repository.Orders.ToListAsync();
-
-        UnshippedOrders = AllOrders.Where(x => !x.Shipped);
-        ShippedOrders = AllOrders.Where(x => x.Shipped);
-    }
-
-    public void ShipOrder(int id) => UpdateOrder(id, true);
-    public void ResetOrder(int id) => UpdateOrder(id, false);
-    private void UpdateOrder(int id, bool shipValue)
-    {
-        Order o = Repository.Orders.FirstOrDefault(x => x.OrderId == id);
-        o.Shipped = shipValue;
-        Repository.SaveOrder(o);
-
-        var content = EmailHelper.PrepareOrderEmail(o, true, shipValue);
-
-        emailService.SendEmail(o.Email, "Your order was " + (shipValue == true ? "shipped" : "updated") + "!", content);
-    }
-    public void CancelOrder(int id)
-    {
-        Order o = Repository.Orders.FirstOrDefault(x => x.OrderId == id);
-        o.Canceled = true;
-        o.Note = "Order was cancelled by an administrator";
-        Repository.SaveOrder(o);
-
-        var content = EmailHelper.PrepareOrderEmail(o, true, wasCancelled: true);
-
-        emailService.SendEmail(o.Email, "Your order was cancelled!", content);
-    }
 }

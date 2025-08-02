@@ -1,0 +1,120 @@
+﻿@page "/admin/ArticleGroups"
+
+@using ClothesShop.Models
+@using ClothesShop.Models.ViewModels
+@using ClothesShop.Services
+@using Microsoft.EntityFrameworkCore
+@using ClothesShop.Infrastructure
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+
+@inject Localizer L
+
+@inherits OwningComponentBase<ClothesShop.Repository.IArticleGroupRepository>
+
+<table class="table table-sm table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>@L["Admin Article Group ID"]</th>
+            <th>@L["Admin Article Group Name"]</th>
+            <th>@L["Admin Article Group Description"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (ArticleGroupData?.Count() > 0)
+        {
+            @foreach (ArticleGroup b in ArticleGroupData)
+            {
+                <tr>
+                    <td>@b.ArticleGroupId</td>
+                    <td>@b.Name</td>
+                    <td>@b.Description</td>
+
+                    <td>
+                        <NavLink class="btn btn-info btn-sm"
+                        href="@UrlTypeEnum.Details.GetAdminUrl("ArticleGroups", b.ArticleGroupId)">
+                            @L["Admin Article Group Details"]
+                        </NavLink>
+                        <NavLink class="btn btn-warning btn-sm"
+                        href="@UrlTypeEnum.Edit.GetAdminUrl("ArticleGroups", b.ArticleGroupId)">
+                            @L["Admin Article Group Edit"]
+                        </NavLink>
+
+                        <button class="btn btn-danger btn-sm"
+                        @onclick="@(() => DeleteArticleGroup(b))">
+                            @L["Admin Article Group Delete"]
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else if (!Loaded)
+        {
+            <tr>
+                <td colspan="5" class="text-center">@L["Loading..."]</td>
+            </tr>
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center">@L["Admin No Article Groups"]</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<Pagination PagingInfo="PagingInfoData" OnPagingInfoChanged="OnPagingInfoChanged" />
+
+<NavLink class="btn btn-primary" href="@UrlTypeEnum.Create.GetAdminUrl("ArticleGroups")">@L["Admin Article Group Create"]</NavLink>
+
+
+@code {
+    public ClothesShop.Repository.IArticleGroupRepository Repository => Service;
+
+    public IEnumerable<ArticleGroup> ArticleGroupData { get; set; }
+
+    public bool Loaded { get; set; }
+
+    public PagingInfo PagingInfoData;
+
+    protected async override Task OnInitializedAsync()
+    {
+        Loaded = false;
+
+        await UpdateData();
+
+        Loaded = true;
+    }
+
+    public async Task UpdateData()
+    {
+
+        PagingInfoData = new PagingInfo
+            {
+                CurrentPage = 1,
+                ItemsPerPage = 10,
+                TotalItems = await Repository.GetArticleGroupsPaginatedAdminCount()
+            };
+
+        ArticleGroupData = await Repository.GetArticleGroupsByParentId();
+    }
+
+    public async Task DeleteArticleGroup(ArticleGroup b)
+    {
+        await Repository.Delete(b.ArticleGroupId);
+
+        await UpdateData();
+    }
+
+    private async Task OnPagingInfoChanged(PagingInfo args)
+    {
+        PagingInfoData = new()
+            {
+                CurrentPage = args.CurrentPage,
+                ItemsPerPage = args.ItemsPerPage,
+                TotalItems = PagingInfoData.TotalItems
+            };
+
+        ArticleGroupData = await Repository.GetArticleGroupsPaginatedAdmin(PagingInfoData.CurrentPage, PagingInfoData.ItemsPerPage);
+    }
+}

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ClothesShop.Models;
 using ClothesShop.Repository;
-using System.Linq;
+using System.Threading.Tasks;
+using ClothesShop.Services;
 
 namespace ClothesShop.Controllers
 {
@@ -10,6 +10,8 @@ namespace ClothesShop.Controllers
     {
         private readonly IStoreRepository repository;
         private readonly Cart cartService;
+
+
         public CartController(IStoreRepository repository, Cart cartService)
         {
             this.repository = repository;
@@ -26,9 +28,9 @@ namespace ClothesShop.Controllers
 
         [HttpPost]
         [Route("Cart/Post")]
-        public IActionResult Post([FromForm] Article article)
+        public async Task<IActionResult> Post([FromForm] Article article)
         {
-            var articleFromDb = repository.Articles.Include(x => x.ArticleType).FirstOrDefault(x => x.ArticleId == article.ArticleId);
+            var articleFromDb = await repository.GetArticleById(article.ArticleId);
             if (articleFromDb != null)
             {
                 cartService.AddItem(articleFromDb, 1);
@@ -38,9 +40,9 @@ namespace ClothesShop.Controllers
 
         [HttpPost]
         [Route("Cart/Delete")]
-        public IActionResult Delete([FromForm] Article article)
+        public async Task<IActionResult> Delete([FromForm] Article article)
         {
-            var articleFromDb = repository.Articles.Include(x => x.ArticleType).FirstOrDefault(x => x.ArticleId == article.ArticleId);
+            var articleFromDb = await repository.GetArticleById(article.ArticleId);
             if (articleFromDb != null)
             {
                 cartService.RemoveLine(articleFromDb);

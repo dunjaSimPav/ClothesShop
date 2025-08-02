@@ -1,0 +1,59 @@
+﻿@using ClothesShop.Models.ViewModels
+@using ClothesShop.Services
+
+@inject Localizer L
+
+@if (LocalPagingInfo is not null)
+{
+    @if (LocalPagingInfo.TotalPages >= 1)
+    {
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(LocalPagingInfo.CurrentPage == 1 ? "disabled" : "")">
+                    <button class="page-link getstarted" onclick="@(()=> SetPage(LocalPagingInfo.CurrentPage - 1))">@L["Previous"]</button>
+                </li>
+                @for (int i = 1; i <= LocalPagingInfo.TotalPages; i++)
+                {
+                    int pageNumber = i;
+                    <li class="page-item @(i == LocalPagingInfo.CurrentPage ? "active" : "")">
+                        <button class="page-link getstarted" onclick="@(() => SetPage(pageNumber))">@pageNumber</button>
+                    </li>
+                }
+                <li class="page-item @(LocalPagingInfo.CurrentPage == LocalPagingInfo.TotalPages ? "disabled" : "")">
+                    <button class="page-link getstarted" onclick="@(() => SetPage(LocalPagingInfo.CurrentPage + 1))">@L["Next"]</button>
+                </li>
+            </ul>
+        </nav>
+    }
+}
+
+@code {
+    [Parameter] public PagingInfo PagingInfo { get; set; }
+
+    public PagingInfo LocalPagingInfo { get; set; } = new PagingInfo()
+    {
+        CurrentPage = 1,
+        ItemsPerPage = 10,
+        TotalItems = 0
+    };
+
+    [Parameter] public EventCallback<PagingInfo> OnPagingInfoChanged { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (PagingInfo is not null && LocalPagingInfo is not null && !PagingInfo.Equals(LocalPagingInfo))
+        {
+            LocalPagingInfo = PagingInfo;
+            await SetPage(LocalPagingInfo.CurrentPage);
+        }
+    }
+
+    protected async Task SetPage(int page)
+    {
+        if (PagingInfo != null && page > 0 && page <= LocalPagingInfo.TotalPages)
+        {
+            LocalPagingInfo.CurrentPage = page;
+            await OnPagingInfoChanged.InvokeAsync(LocalPagingInfo);
+        }
+    }
+}

@@ -1,4 +1,6 @@
 ﻿@inject ISessionManager _sessionManager
+@inject Localizer L
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -57,7 +59,7 @@
             <div class="toast" style="position: absolute; top: 10px; right: 10px;" data-delay="5000">
                 <div class="toast-header">
                     <i class="fa fa-exclamation-triangle rounded mr-2"></i>
-                    <strong class="mr-auto">Bootstrap</strong>
+                    <strong class="mr-auto">@L["ErrorMessageHeader"]</strong>
                     <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -69,12 +71,12 @@
         }
     }
     <!-- ======= Header ======= -->
-    <header id="header" class="header fixed-top">
+    <header id="header" class="header fixed-top header-fill">
         <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
 
             <a asp-controller="Home" asp-action="Index" class="logo d-flex align-items-center">
                 <img src="/assets/img/logo.png" alt="">
-                <span>FlexStart</span>
+                <span>@L["AppName"]</span>
             </a>
             <vc:navigation-menu />
         </div>
@@ -88,7 +90,7 @@
 
         <div class="container">
             <div class="copyright">
-                &copy; Copyright <strong><span>FlexStart</span></strong>. All Rights Reserved
+                &copy; Copyright <strong><span>@L["AppName"]</span></strong>. All Rights Reserved
             </div>
             <div class="credits">
                 <!-- All the links in the footer should remain intact. -->

@@ -10,32 +10,33 @@ namespace ClothesShop.Models
         public virtual void AddItem(Article Article, int quantity)
         {
             CartLine line = Lines
-                .Where(x => x.Article.ArticleId == Article.ArticleId)
+                .Where(x => x.ArticleId == Article.ArticleId)
                 .FirstOrDefault();
 
             if (line == null)
+            {
                 Lines.Add(new CartLine
                 {
-                    Article = Article,
-                    Quantity = quantity
+                    ArticleId = Article.ArticleId,
+                    ArticleName = Article.Name,
+                    ArticleGroupName = Article.ArticleGroupItems?.FirstOrDefault()?.ArticleGroup?.ParentArticleGroup?.Name ?? "Groups not loaded...",
+                    Quantity = quantity,
+                    Price = Article.Price
                 });
+            }
             else
+            {
                 line.Quantity += quantity;
+                line.Price = Article.Price;
+            }
         }
 
         public virtual void RemoveLine(Article Article) =>
-            Lines.RemoveAll(x => x.Article.ArticleId == Article.ArticleId);
+            Lines.RemoveAll(x => x.ArticleId == Article.ArticleId);
 
         public virtual decimal ComputeTotalValue() =>
-            Lines.Sum(x => x.Article.Price * x.Quantity);
+            Lines.Sum(x => x.Price * x.Quantity);
 
         public virtual void Clear() => Lines.Clear();
-    }
-
-    public class CartLine
-    {
-        public int CartLineId { get; set; }
-        public Article Article { get; set; }
-        public int Quantity { get; set; }
     }
 }

@@ -1,12 +1,32 @@
 ﻿@model OrdersByUserViewModel
 
-@{
-    ViewData["Title"] = "OrdersByUser";
-}
+@inject Localizer L
 
-<h1>Not shipped orders</h1>
+<main id="main">
+    <section id="portfolio" class="portfolio p-t-90">
+        <div class="container" data-aos="fade-up">
 
-<partial name="OrdersByUserTable" model="Model.Orders" />
+            <header class="section-header">
+                <h2>@L["My Orders"]</h2>
+            </header>
 
-<h1>Shipped orders</h1>
-<partial name="OrdersByUserTable" model="Model.ShippedOrders" />
+            <div class="row w-100">
+                <div class="col-md-12">
+                    <h5 class="font-weight-bold">@L["Pending Orders"]</h5>
+                    <partial name="OrdersByUserTable" model="Model.Orders" />
+                </div>
+            </div>
+            <div class="row w-100">
+                <div class="col-md-12">
+                    <h5 class="font-weight-bold">@L["Sent Orders"]</h5>
+                    <partial name="OrdersByUserTable" model="Model.ShippedOrders" />
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+
+
+
+

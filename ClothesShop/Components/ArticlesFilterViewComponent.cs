@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ViewComponents;
 using ClothesShop.Repository;
 using System.Linq;
+using System;
 
 namespace ClothesShop.Components
 {
@@ -13,17 +14,7 @@ namespace ClothesShop.Components
 
         public ViewViewComponentResult Invoke()
         {
-            string ArticleTypeKey = RouteData?.Values["ArticleType"]?.ToString();
-            long.TryParse(ArticleTypeKey, out long ArticleType);
-
-            if (ArticleType > 0)
-                ViewBag.SelectedArticleType = ArticleType;
-            else
-                ViewBag.SelectedArticleType = null;
-
-
-            return View(storeRepository.ArticleTypes.Distinct()
-                .OrderBy(x => x.Name));
+            throw new NotImplementedException();
         }
     }
 }

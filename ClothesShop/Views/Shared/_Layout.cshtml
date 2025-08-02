@@ -1,4 +1,6 @@
 ﻿@inject ISessionManager _sessionManager
+@inject Localizer L
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -68,12 +70,12 @@
         }
     }
     <!-- ======= Header ======= -->
-    <header id="header" class="header fixed-top">
+    <header id="header" class="header fixed-top header-fill">
         <div class="container-fluid container-xl d-flex align-items-center justify-content-between">
 
             <a asp-controller="Home" asp-action="Index" class="logo d-flex align-items-center">
                 <img src="/assets/img/logo.png" alt="">
-                <span>Clothes Store</span>
+                <span>@L["AppName"]</span>
             </a>
             <vc:navigation-menu />
         </div>
@@ -87,7 +89,7 @@
 
         <div class="container">
             <div class="copyright">
-                &copy; Copyright <strong><span>Clothes Store</span></strong>. All Rights Reserved
+                &copy; Copyright <strong><span>@L["AppName"]</span></strong>. All Rights Reserved
             </div>
             <div class="credits">
                 <!-- All the links in the footer should remain intact. -->
@@ -102,17 +104,17 @@
     <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
 
     <!-- Vendor JS Files -->
+    <script src="/lib/jquery/js/jquery.min.js"></script>
+    <script src="/lib/popper/js/popper.js"></script>
     <script src="/assets/vendor/purecounter/purecounter_vanilla.js"></script>
     <script src="/assets/vendor/aos/aos.js"></script>
-    <script src="/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/bootstrap/js/bootstrap.js"></script>
     <script src="/assets/vendor/glightbox/js/glightbox.min.js"></script>
     <script src="/assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
     <script src="/assets/vendor/swiper/swiper-bundle.min.js"></script>
 
     <!-- Template Main JS File -->
     <script src="/assets/js/main.js"></script>
-    <script src="/lib/jquery/js/jquery.min.js"></script>
-    <script src="/lib/popper/js/popper.js"></script>
     <script>
         $(document).ready(function(){
           $('.toast').toast('show');

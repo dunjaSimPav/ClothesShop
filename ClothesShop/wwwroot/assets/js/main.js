@@ -293,3 +293,18 @@
   new PureCounter();
 
 })();
+
+
+//$(document).ready(() => {
+//    $('.dropdown').click(function () {
+
+//        $('.dropdown-menu').toggleClass('show');
+
+//    });
+
+//    $('.dropdown-submenu a.test').on("click", function (e) {
+//        $(this).next('ul').toggle();
+//        e.stopPropagation();
+//        e.preventDefault();
+//    });
+//});

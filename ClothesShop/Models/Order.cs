@@ -1,24 +1,26 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using ClothesShop.Enums;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace ClothesShop.Models
 {
     public class Order
     {
-        public int OrderId { get; set; }
-        public List<CartLine> Lines { get; set; }
+        public long OrderId { get; set; }
+
+        public virtual List<OrderLine> Lines { get; set; }
 
         [Required(ErrorMessage = "Please enter a name")]
+        [DisplayName("Ime i prezime")]
         public string Name { get; set; }
 
         [Required(ErrorMessage = "Please enter an email")]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "Please enter the first address line")]
-        public string Line1 { get; set; }
-        public string Line2 { get; set; } = "";
-        public string Line3 { get; set; } = "";
+        [Required(ErrorMessage = "Please enter the address")]
+        public string Address { get; set; }
 
         [Required(ErrorMessage = "Please enter a city name")]
         public string City { get; set; }
@@ -36,7 +38,7 @@ namespace ClothesShop.Models
         [BindNever]
         public bool Shipped { get; set; }
 
-        public bool Canceled { get; set; }
+        public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
         public string Note { get; set; }
 
